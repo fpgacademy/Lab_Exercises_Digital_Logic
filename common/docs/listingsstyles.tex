@@ -1,0 +1,191 @@
+% listings is a package that supports encapsulating source code in LaTeX conveniently
+\usepackage{listings}
+
+\def\expandparam\lstinputlisting[#1]#2{\edef\tmp{\noexpand\lstinputlisting[#1]{#2}}\tmp}
+
+%%%%%%%%%%%%%%%%%%%% Source Code Formatting %%%%%%%%%%%%%%%%%%%%
+\definecolor{globalCommentColour}{rgb}{0.588,0.588,0.588}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Defining language style
+% NiosII ASM
+\lstdefinelanguage[NiosII]{Assembler} {
+  morekeywords={add, addi, and, andhi, andi, beq, bge, bgeu, bgt, bgtu, ble,  bleu, blt, bltu, bne, br, break,
+  bret, call, callr, cmpeq, cmpeqi, cmpge, cmpgei, cmpgeu, cmpgeui, cmpgt, cmpgti, cmpgtu, cmpgtui, cmple,
+  cmplei, cmpleu, cmpleui, cmplt, cmplti, cmpltu, cmpltui, cmpne, cmpnei, custom, div, divu, eret, flushd,
+  flushda, flushi, flushp, initd, initda, initi, jmp, jmpi, ldb, ldbio, ldbu, ldbuio, ldh, ldhio, ldhu, ldhuio,
+  ldw, ldwio, mov, movhi, movi, movia, movui, mul, muli, mulxss, mulxsu, mulxuu, nextpc, nop, nor, or, orhi, ori,
+  rdctl, rdprs, ret, rol, roli, ror, sll, slli, sra, srai, srl, srli, stb, stbio, sth, sthio, stw, stwio,
+  sub, subi, sync, trap, wrctl, wrtcl, wrprs, xor, xori, xorhi, xori},
+  morekeywords=[2]{.abort, .ABORT, .align, .app-file, .ascii, .asciz, .balign, .byte, .comm, .data, .def,
+  .desc, .dim, .double, .eject, .else, .end, .endef, .endif, .equ, .equiv, .err, .extern, .file, .fill, .float,
+  .global, .globl, .hword, .ident, .if, .include, .int, .irp, .irpc, .lcomm, .lflags, .line, .linkonce, .ln,
+  .list, .long, .macro, .mri, .nolist, .octa, .org, .p2align, .psize, .quad, .rept, .sbttl, .scl, .section,
+  .set, .short, .single, .size, .sleb128, .skip, .space, .stadb, .stabn, .stabs, .string, .symver, .tag,
+  .text, .title, .type, .val, .uleb128, .word},
+  morekeywords=[3]{et, bt, gp, sp, fp, ea, sstatus, ra, pc, status, estatus, bstatus, ienable, ipending, cpuid,
+  exception, pteaddr, tlbacc, tlbmisc, eccinj, badaddr, config, mpubase, mpuacc},
+  sensitive=t,
+  alsoletter=.,
+  morestring=[b]",
+  morecomment=[s]{/*}{*/},
+  morecomment=[l]\#,
+}[keywords,comments,strings]
+   
+%% NOTE: morekeywords=[2] are GNU directives.
+   
+\definecolor{niosInstructionColour}{rgb}{0.000,0.608,0.000}
+\definecolor{niosDirectiveColour}{rgb}{0.000,0.000,0.902}
+\definecolor{niosSpecialRegColour}{rgb}{0.000,0.000,0.000}
+\definecolor{niosStringColour}{rgb}{0.808,0.482,0.000}
+   
+%% NOTE: To make bold use: =\bfseries\color{<colour>}
+\lstdefinestyle{defaultNiosStyle} {
+  language=[NiosII]{Assembler},
+  stringstyle=\color{niosStringColour},
+  keywordstyle=\color{niosInstructionColour},
+  keywordstyle=[2]\color{niosDirectiveColour},
+  keywordstyle=[3]\itshape\color{niosSpecialRegColour}
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Defining language style
+% ArmA9 ASM
+\lstdefinelanguage[ArmA9]{Assembler} {
+  morekeywords={ADC, ADD, ADDS, AND, ANDS, B, BAL, BEQ, BGE, BGT, BL, BLT, BIC, BKPT, BLX, BNE, BX, CDP, CLZ, CMN, CMP, EOR,
+  EORS, LDC, LDM, LDR, LDRB, LDRBT, LDRH, LDRSB, LDRSH, LDRT, LSL, MCR, MLA, MOV, MOVW, MOVT, MRC, MRS, MSR, MUL, MVN, ORR, PLD,
+  ROR, RSB, RSC, SBC, SMLAL, SMULL, STC, STM, STR, STRB, STRBT, STRH, STRT, SUB, SUBS, SWI, SWP, SWPB, TEQ, UMLAL,
+  PUSH, POP, MOVS, RORS, LSR},
+  morekeywords=[2]{.abort, .ABORT, .align, .app-file, .ascii, .asciz, .balign, .byte, .comm, .data, .def,
+  .desc, .dim, .double, .eject, .else, .end, .endef, .endif, .equ, .equiv, .err, .extern, .file, .fill, .float,
+  .global, .globl, .hword, .ident, .if, .include, .int, .irp, .irpc, .lcomm, .lflags, .line, .linkonce, .ln,
+  .list, .long, .macro, .mri, .nolist, .octa, .org, .p2align, .psize, .quad, .rept, .sbttl, .scl, .section,
+  .set, .short, .single, .size, .sleb128, .skip, .space, .stadb, .stabn, .stabs, .string, .symver, .tag,
+  .text, .title, .type, .val, .vectors, .uleb128, .word},
+  morekeywords=[3]{SP, PC, MIDR, CTR, TCMTR, TLBTR, MPIDR, ID_PFR0, ID_PFR1, ID_DFR0, ID_MMFR0, ID_MMFR1, ID_MMFR2,
+  ID_MMFR3, ID_ISAR0, ID_ISAR1, ID_ISAR2, ID_ISAR3, ID_ISAR4, CCSIDR, CLIDR, AIDR, CSSELR, TTBR0, TTRB1, TTBR2, DACR,
+  DFSR, IFSR, ADFSR, AIFSR, DFAAR, IFAR, ICIALLUIS, BPIALLIS, PAR, ICIALLU, ICIMVAU, BPIALL, DCIMVAC, DCISW, V2PCWPR,
+  DCCVAC, DCCSW, DDIMVAC, DCISW, TLBALLIS, TLBIMVAIS, TLBIASIDIS, TLBIMVAAIS, TLBIALL, TLBIMVA, TLBIASID, TLBIMVAA,
+  PMCR, PMCNTENSET, PMCNTENCLR, PMOVSR, PMSWINC, PMSELR, PMXEVTYPER, PMXEVCNTR, PMUSERENR, PMINTENSET, PMINTENCLR,
+  PRRR, NRRR, PLEIDR, PLEASR, PLEFSR, PLEUAR, PLEPCR, VBAR, MVBAR, ISR, FCSEIDR, CONTEXTIDR, TPIDRURW, TPIDRURO, TPIDRPRW},
+  sensitive=f,
+  alsoletter=.,
+  morestring=[b]",
+  morecomment=[s]{/*}{*/},
+  morecomment=[l]{//},
+}[keywords,comments,strings]
+   
+%% NOTE: morekeywords=[2] are GNU directives.
+   
+\definecolor{armInstructionColour}{rgb}{0.000,0.608,0.000}
+\definecolor{armDirectiveColour}{rgb}{0.000,0.000,0.902}
+\definecolor{armSpecialRegColour}{rgb}{0.000,0.000,0.000}
+\definecolor{armStringColour}{rgb}{0.808,0.482,0.000}
+   
+\lstdefinestyle{defaultArmStyle} {
+  language=[ArmA9]{Assembler},
+  stringstyle=\color{armStringColour},
+  keywordstyle=\color{armInstructionColour},
+  keywordstyle=[2]\color{armDirectiveColour},
+  keywordstyle=[3]\itshape\color{armSpecialRegColour}
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Defining language style
+% FPGAcademy ASM
+\lstdefinelanguage{ASM}{
+  morekeywords = [1]{mv, mvt, mvne, mvcc, add, sub, st, ld, and, b, bne, beq, bcc, bcs},
+  morekeywords = [2]{word, define},
+  keywordstyle = [1]\color{ForestGreen},
+  keywordstyle = [2]\color{blue},
+  sensitive = true,
+  morecomment = [l]{//},
+}
+
+\lstset{
+  language = ASM,
+  basicstyle=\small\color{black}\ttfamily,
+  commentstyle=\small\color{Brown}\itshape\ttfamily,
+  showstringspaces=false,
+  frame=none, %lines % boxed listings
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Defining language style
+% Java
+\definecolor{javaStringColour}{rgb}{0.808,0.482,0}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Defining language style
+% C
+\definecolor{CStringColour}{rgb}{0.808,0.482,0}
+
+\lstset{
+  language = C,
+  basicstyle=\small\color{black}\ttfamily, 
+  commentstyle=\small\color{PineGreen}\itshape\ttfamily,
+  keywordstyle=\small\color{blue}\bfseries\ttfamily,
+  showstringspaces=false,
+  frame=none, %lines % boxed listings
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Defining language style
+% Verilog
+\definecolor{verilogCommentColour}{rgb}{0.000,0.502,0.000}
+
+\lstdefinestyle{defaultVerilogStyle} {
+  language={Verilog},
+  keywordstyle=\color{blue},
+  commentstyle=\color{verilogCommentColour}
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Defining language style
+% VHDL
+\lstdefinestyle{defaultVHDLStyle} {
+  language={VHDL},
+  keywordstyle=\color{blue},
+  commentstyle=\color{verilogCommentColour}
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Defining language style
+% LaTeX
+\lstdefinelanguage[LocalLaTeX]{TeX}[LaTeX]{TeX}{moretexcs={bf, it, sf, lstset},}
+
+\lstdefinestyle{defaultLocalLatexStyle} {
+  language=[LocalLatex]{TeX},
+  keywordstyle=\color{blue}\bfseries,
+  keywordstyle=[2]\color{blue},
+  keywordstyle=[3]\color{blue}\bfseries
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Defining language style
+% Default
+\lstset{
+  basicstyle=\small\color{black}\ttfamily,
+  commentstyle=\small\color{globalCommentColour}\itshape\ttfamily,
+  keywordstyle=\small\color{blue}\bfseries\ttfamily,
+  showstringspaces=false,
+  frame=none, %lines % boxed listings
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

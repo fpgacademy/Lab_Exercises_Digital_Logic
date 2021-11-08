@@ -1,0 +1,267 @@
+\documentclass[epsfig,10pt,fullpage]{article}
+
+\newcommand{\LabNum}{3}
+\newcommand{\CommonDocsPath}{../../../common/docs}
+\input{\CommonDocsPath/preamble.tex}
+
+\begin{document}
+
+\centerline{\huge Digital Logic}
+~\\
+\centerline{\huge Laboratory Exercise \LabNum}
+~\\
+\centerline{\large Latches, Flip-flops, and Registers}
+~\\
+
+\noindent
+The purpose of this exercise is to investigate latches, flip-flops, and registers.
+
+\section*{Part I}
+\addcontentsline{toc}{1}{Part I}
+Intel\textsuperscript{\textregistered} FPGAs include flip-flops that are available for implementing a user's circuit. 
+We will show how to make use of these flip-flops in Part IV of this exercise. But
+first we will show how storage elements can be created in an FPGA without using 
+its dedicated flip-flops.
+
+Figure~\ref{fig:RSlatch} depicts a gated RS latch circuit. A style of VHDL code that 
+uses logic expressions to describe this circuit is given in Figure~\ref{fig:latch_code}.
+If this latch is implemented in an FPGA that has 4-input lookup tables (LUTs),
+then only one lookup table is needed, as shown in Figure~\ref{fig:RSlatch_cct}$a$.  
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[scale=.9]{figures/RS_latch.pdf}
+	\end{center}
+\caption{A gated RS latch circuit.}
+\label{fig:RSlatch}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+\begin{minipage}[t]{12.5 cm}
+\begin{tabbing}
+-\,- A gated RS latch desribed the hard way\\
+LIBRARY ieee;\\
+USE ieee.std\_logic\_1164.all;\\
+\\
+ZZ\=PORT ~( \=Clk, R, S	\=: OUTZZ\=STD\_LOGIC;\kill
+ENTITY part1 IS\\
+\>PORT (\>Clk, R, S \>: IN	\>STD\_LOGIC;\\
+\>\>Q \>: OUT \>STD\_LOGIC);\\
+END part1;\\
+\\
+ARCHITECTURE Structural OF part1 IS\\
+\>SIGNAL R\_g, S\_g, Qa, Qb : STD\_LOGIC ;\\
+\>ATTRIBUTE KEEP : BOOLEAN;\\
+\>ATTRIBUTE KEEP OF R\_g, S\_g, Qa, Qb : SIGNAL IS TRUE;\\
+BEGIN	\\
+\>R\_g $<$= R AND Clk;\\
+\>S\_g $<$= S AND Clk;\\
+\>Qa $<$= NOT (R\_g OR Qb);\\
+\>Qb $<$= NOT (S\_g OR Qa);\\
+~\\
+\>Q $<$= Qa;\\
+~\\
+END Structural;
+\end{tabbing}
+\end{minipage}
+\end{center}
+\caption{Specifying the RS latch by using logic expressions.}
+\label{fig:latch_code}
+\end{figure}
+
+Although the latch can be correctly realized in one 4-input LUT, this implementation
+does not allow its internal signals, such as $R\_g$ and $S\_g$, to be observed, because
+they are not provided as outputs from the LUT. To preserve these internal signals in 
+the implemented circuit, it is necessary to include a {\it compiler
+directive} in the code.  In Figure~\ref{fig:latch_code} the directive KEEP is
+included by using a VHDL ATTRIBUTE statement to instruct the Quartus\textsuperscript{\textregistered} compiler to use separate logic elements for each of
+the signals $R\_g, S\_g, Qa,$ and $Qb$. Compiling the code produces the circuit with four
+4-LUTs depicted in Figure~\ref{fig:RSlatch_cct}$b$. 
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[scale=0.9]{figures/figure3.pdf}
+	\end{center}
+	\caption{Implementation of the RS latch from Figure~\ref{fig:RSlatch}.}
+\label{fig:RSlatch_cct}
+\end{figure}
+
+Create a Quartus project for the RS latch circuit as follows:
+\begin{enumerate}
+\item Create a new Quartus project for your DE-series board.
+\item Generate a VHDL file with the code in Figure~\ref{fig:latch_code}
+and include it in the project. 
+\item Compile the code. Use the Quartus RTL Viewer tool to examine the gate-level
+circuit produced from the code, and use the Technology Map Viewer tool
+to verify that the latch is implemented as shown in Figure~\ref{fig:RSlatch_cct}$b$.
+
+\item Simulate the behavior of your VHDL code by using the simulation feature provided
+in the Modelsim software. Use the testbench provided in the laboratory materials to drive
+the signals for your simulation. The procedure for using Modelsim for simulation is
+described in the tutorial {\it Using the ModelSim-Intel FPGA Simulator}. An example of a
+vector waveform file is displayed in Figure~\ref{fig:sim}. The waveforms in the figure
+begin by setting {\it Clk} $= 1$ and $R = 1$, which allows the simulation tool to
+initialize all of the signals inside of the latch to known values. 
+\end{enumerate}
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[width = 5in]{figures/simulation.pdf}
+	\end{center}
+	\caption{Simulation waveforms for the RS latch.}
+\label{fig:sim}
+\end{figure}
+
+\section*{Part II}
+\addcontentsline{toc}{2}{Part II}
+Figure~\ref{fig:gatedD} shows the circuit for a gated D latch.
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[]{figures/D_latch.pdf}
+	\end{center}
+	\caption{Circuit for a gated D latch.}
+\label{fig:gatedD}
+\end{figure}
+
+Perform the following steps:
+
+\begin{enumerate}
+\item Create a new Quartus project. Generate a VHDL file using the style of code 
+in Figure~\ref{fig:latch_code} for the gated D latch. Use the KEEP directive to ensure
+that separate logic elements are used to implement the signals $R, S\_g, R\_g, Qa,$ and
+$Qb$.
+\item Compile your project and then use the 
+Technology Map Viewer tool to examine the implemented circuit.
+\item Verify that the latch works properly for all input conditions by using functional 
+simulation. Examine the timing characteristics of the circuit by using timing simulation.
+\item Create a new Quartus project which will be used for implementation of the gated D
+latch on your DE-series board. This project should consist of a top-level module that 
+contains the appropriate input and output ports (pins) for your board. Instantiate your
+latch in this top-level module. Use switch {\it SW}$_0$ to drive the {\it D} input of the latch,
+and use {\it SW}$_1$ as the {\it Clk} input. Connect the Q output to {\it LEDR}$_{0}$.
+\item
+Include the required pin assignments and then compile your project and download the 
+compiled circuit onto your DE-series board.
+\item
+Test the functionality of your circuit by toggling the $D$ and {\it Clk} switches and observing 
+the Q output.
+\end{enumerate}
+
+\section*{Part III}
+\addcontentsline{toc}{3}{Part III}
+Figure~\ref{fig:MS_FF} shows the circuit for a master-slave D flip-flop.
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[]{figures/figure5.pdf}
+	\end{center}
+	\caption{Circuit for a master-slave D flip-flop.}
+\label{fig:MS_FF}
+\end{figure}
+
+Perform the following:
+\begin{enumerate}
+\item Create a new Quartus project. Generate a VHDL file that instantiates two
+copies of your gated D latch module from Part II to implement the master-slave flip-flop.
+\item Include in your project the appropriate input and output ports for your 
+DE-series board. Use switch {\it SW}$_0$ to drive the D input of the flip-flop,
+and use {\it SW}$_1$ as the {\it Clock} input. Connect the Q output to {\it LEDR}$_{0}$.
+\item
+Include the required pin assignments and then compile your project.
+\item Use the Technology Viewer to examine the D flip-flop circuit, and use
+simulation to verify its correct operation.
+\item
+Download the circuit onto your DE-series board and test its functionality 
+by toggling the $D$ and {\it Clock} switches and observing the Q output.
+\end{enumerate}
+
+\newpage
+\section*{Part IV}
+\addcontentsline{toc}{4}{Part IV}
+Figure~\ref{fig:waves} shows a circuit with three different storage elements: a gated D latch, 
+a positive-edge triggered D flip-flop, and a negative-edge triggered D flip-flop.
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[]{figures/figure6.pdf}
+	\end{center}
+	\caption{Circuit and waveforms for Part IV.}
+\label{fig:waves}
+\end{figure}
+
+Implement and simulate this circuit using the Quartus software as follows:
+\begin{enumerate}
+\item Create a new Quartus project. 
+\item Write a VHDL file that instantiates the three storage elements. For this part you
+should no longer use the KEEP directive (that is, the VHDL ATTRIBUTE statement) from Parts I 
+to III. Figure~\ref{fig:behave} gives a behavioral style 
+of VHDL code that specifies the gated D latch in Figure~\ref{fig:gatedD}.
+This latch can be implemented in one 4-input lookup table. Use a similar style of
+code to specify the flip-flops in Figure~\ref{fig:waves}.
+\item Compile your code and use the Technology Map Viewer to examine the implemented circuit.
+Verify that the latch uses one lookup table and that the flip-flops are implemented using
+the flip-flops provided in the target FPGA.
+\item Use Modelsim to simulate the circuit you created. Use the included testbench file to 
+specify the inputs $D$ and {\it Clock} as indicated in Figure~\ref{fig:waves}.
+Make sure that the testbench correctly instantiates the module you created and 
+run the simulation to observe the different behavior of the three storage elements.
+\end{enumerate}
+
+\begin{figure}[H]
+\begin{center}
+\begin{minipage}[t]{12.5 cm}
+\begin{tabbing}
+LIBRARY ieee ; \\
+USE ieee.std\_logic\_1164.all ; \\
+~\\
+ENTITY latch IS \\
+ZZ\=PORT ~( \=D,ClkZ \=: OUTZ\=STD\_LOGIC;\kill
+\>PORT (	\>D, Clk \>: IN \>STD\_LOGIC ; \\
+\>\>Q \>: OUT \>STD\_LOGIC) ; \\
+END latch ;\\
+~\\
+ARCHITECTURE Behavior OF latch IS    \\
+BEGIN\\
+ZZ\=ZZ\=ZZ\=ZZ\=\kill
+\>PROCESS ( D, Clk ) \\
+\>BEGIN\\
+\>\>IF Clk = '1' THEN \\
+\>\>\>Q $<$= D ; \\
+\>\>END IF ; \\
+\>END PROCESS ; \\
+END Behavior ;\\
+\end{tabbing}
+\end{minipage}
+\end{center}
+\caption{A behavioral style of VHDL code that specifies a gated D latch.}
+\label{fig:behave}
+\end{figure}
+
+\section*{Part V}
+\addcontentsline{toc}{5}{Part V}
+We wish to display the hexadecimal value of an 8-bit number $A$
+on the two 7-segment displays $HEX3-2$.  We also wish to display the
+hex value of an 8-bit number $B$ on the two 7-segment displays $HEX1-0$. 
+The values of $A$ and $B$ are inputs to the circuit which are
+provided by means of switches $SW_{7-0}$.  To input the values of $A$ and $B$, 
+first set the switches to the desired value of $A$, store these switch values in a register, 
+and then change the switches to the desired value of $B$.  Finally, use an adder to 
+generate the arithmetic sum $S = A + B$, and display this sum on the 7-segment 
+displays $HEX5-4$. Show the carry-out produced by the adder on LEDR(0).
+\begin{enumerate}
+\item Create a new Quartus project which will be used to implement the desired
+circuit on your DE-series board.
+\item Write a VHDL file that provides the necessary functionality. Use {\it KEY}$_0$ as
+an active-low asynchronous reset, and use {\it KEY}$_1$ as a clock input.
+\item Include the necessary pin assignments for the pushbutton switches and 7-segment
+displays, and then compile the circuit.
+\item Download the circuit onto your DE-series board and test its functionality 
+by toggling the switches and observing the output displays.
+\end{enumerate}
+
+
+
+\input{\CommonDocsPath/copyright.tex}
+\end{document}

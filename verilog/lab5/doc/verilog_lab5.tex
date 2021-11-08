@@ -1,0 +1,161 @@
+\documentclass[epsfig,10pt,fullpage]{article}
+
+\newcommand{\LabNum}{5}
+\newcommand{\CommonDocsPath}{../../../common/docs}
+\input{\CommonDocsPath/preamble.tex}
+
+\begin{document}
+
+\centerline{\huge Digital Logic}
+~\\
+\centerline{\huge Laboratory Exercise \LabNum}
+~\\
+\centerline{\large Timers and Real-time Clock}
+~\\
+
+The purpose of this exercise is to study the use of clocks in timed circuits. The designed
+circuits are to be implemented on an Intel\textsuperscript{\textregistered} FPGA DE10-Lite, DE0-CV, DE1-SoC, or DE2-115 board.
+
+\section*{Background}
+\addcontentsline{toc}{1}{Background}
+In the Verilog hardware description language we can describe a variable-size counter by 
+using a parameter declaration. An example of an {\it n}-bit counter is shown in 
+Figure~\ref{fig:n_counter}.
+
+\begin{figure}[H]
+\begin{center}
+\begin{minipage}[t]{12.5 cm}
+\begin{tabbing}
+ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\kill
+{\bf module} ~counter (Clock, Reset\_n, Q);\\
+\>{\bf parameter} n = 4;\\
+~\\
+\>{\bf input}  Clock, Reset\_n;\\
+\>{\bf output} [n-1:0] Q;\\
+\>{\bf reg}    [n-1:0] Q;\\
+~\\
+\>{\bf always} @({\bf posedge} Clock or {\bf negedge} Reset\_n)\\
+\>{\bf begin}\\
+\>\>{\bf if} (!Reset\_n)\\
+\>\>\>Q $<$= 1'd0;\\
+\>\>{\bf else}\\
+\>\>\>Q $<$= Q + 1'b1;\\
+\>{\bf end}\\
+{\bf endmodule}
+\end{tabbing}
+\end{minipage}
+\end{center}
+\caption{A Verilog description of an {\it n}-bit counter.}
+\label{fig:n_counter}
+\end{figure}
+
+The parameter {\it n} specifies the number of bits in the counter. When instantiating this
+counter in another Verilog module, a particular value of the parameter {\it n} can be
+specified by using a {\bf defparam} statement. For example, an 8-bit counter can be specified as:
+
+\begin{center}
+\begin{minipage}[t]{12.5 cm}
+\begin{tabbing}
+ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\kill
+counter eight\_bit (Clock, Reset\_n, Q);\\
+\>{\bf defparam} eight\_bit.n = 8;
+\end{tabbing}
+\end{minipage}
+\end{center}
+
+By using parameters we can instantiate counters of different sizes in a logic circuit, without 
+having to create a new module for each counter.
+
+\section*{Part I}
+\addcontentsline{toc}{2}{Part I}
+Create a modulo-$k$ counter by modifying the design of an 8-bit counter to contain an 
+additional parameter. The counter should count from $0$ to $k-1$. When the counter reaches 
+the value $k-1$, then the next counter value should be $0$. Include an output from the
+counter called {\it rollover} and set this output to 1 in the clock cycle where the count value
+is equal to $k-1$.
+
+Perform the following steps:
+\begin{enumerate}
+\item Create a new Quartus\textsuperscript{\textregistered} project which will be used to implement the desired circuit
+on your DE-series board.
+\item Write a Verilog file that specifies the circuit for {\it k} = 20, and an appropriate
+value of $n$.  Your circuit should use pushbutton {\it KEY}$_0$ as an asynchronous reset 
+and {\it KEY}$_1$ as a manual clock input. 
+The contents of the counter should be displayed on the red lights {\it LEDR}. Also display 
+the {\it rollover} signal on one of the LEDR lights.
+\item Include the Verilog file in your project and compile the circuit.
+\item Simulate the designed circuit to verify its functionality.
+\item Make the necessary pin assignments needed to implement the circuit on your
+DE-series board, and compile the circuit.
+\item Verify that your circuit works correctly by observing the lights.
+\end{enumerate}
+
+\section*{Part II}
+\addcontentsline{toc}{3}{Part II}
+Using your modulo-counter from Part I as a subcircuit, 
+implement a 3-digit BCD counter (hint: use multiple counters, not just one). Display the 
+contents of the counter on the 7-segment displays, {\it HEX2$-$0}. Connect all of the counters 
+in your circuit to the 50-MHz clock signal on your DE-series board, and make the BCD counter
+increment at one-second intervals.
+Use the pushbutton switch {\it KEY}$_0$ to reset the BCD counter to 0.
+
+\section*{Part III}
+\addcontentsline{toc}{4}{Part III}
+Design and implement a circuit on your DE-series board that acts as a real-time clock.
+It should display the minutes (from 0 to 59) on {\it HEX$5-4$}, the seconds (from 0 to 59)
+on {\it HEX$3-2$}, and hundredths of a second (from 0 to 99) on {\it HEX}$1-0$. Use the 
+switches {\it SW}$_{7-0}$ to preset the minute 
+part of the time displayed by the clock when {\it KEY}$_1$ is pressed.
+Stop the clock whenever {\it KEY}$_0$ is being pressed and continue the clock when 
+{\it KEY}$_0$ is released.
+
+\section*{Part IV}
+\addcontentsline{toc}{5}{Part IV}
+An early method of telegraph communication was based on the Morse code. This code uses 
+patterns of short and long pulses to represent a message. Each letter is represented as a 
+sequence of dots (a short pulse), and dashes (a long pulse). For example, the first eight 
+letters of the alphabet have the following representation:
+
+\begin{table}[H]
+\begin{center}
+\begin{minipage}[t]{12.5 cm}
+\begin{tabbing}
+ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\kill
+\>A\>\>{\bf $\bullet$  ---}\\
+\>B\>\>{\bf ---  $\bullet$  $\bullet$  $\bullet$}\\
+\>C\>\>{\bf ---  $\bullet$  ---  $\bullet$}\\
+\>D\>\>{\bf ---  $\bullet$  $\bullet$}\\
+\>E\>\>{\bf $\bullet$}\\
+\>F\>\>{\bf $\bullet$  $\bullet$  ---  $\bullet$}\\
+\>G\>\>{\bf ---  ---  $\bullet$}\\
+\>H\>\>{\bf $\bullet$  $\bullet$  $\bullet$  $\bullet$}\\
+\end{tabbing}
+\end{minipage}
+\end{center}
+\end{table}
+
+Design and implement a circuit that takes as input one of the first eight letters of the 
+alphabet and displays the Morse code for it on a red LED. Your circuit should use 
+switches {\it SW}$_{2-0}$ and pushbuttons {\it KEY}$_{1-0}$ as inputs. When a user 
+presses {\it KEY}$_1$, the circuit should display the Morse code for a letter specified 
+by {\it SW}$_{2-0}$ (000 for A, 001 for B, etc.), using 0.5-second pulses to represent dots, 
+and 1.5-second pulses to represent dashes. Pushbutton {\it KEY}$_0$ should function as 
+an asynchronous reset. A high-level schematic diagram of the circuit is shown in 
+Figure~\ref{fig:morse_code_cct}.
+
+~\\
+~\\
+{\bf Hint:} Use a counter to generate 0.5-second pulses, and another counter to keep 
+the {\it LEDR}$_0$ light on for either 0.5 or 1.5 seconds.
+
+\begin{figure}
+\begin{center}
+	\includegraphics[scale = 0.9]{figures/fig_morse_code_circuit_schematic.pdf}
+\end{center}
+\caption{High-level schematic diagram of the circuit for part IV.}
+\label{fig:morse_code_cct}
+\end{figure}
+
+
+\input{\CommonDocsPath/copyright.tex}
+\end{document}

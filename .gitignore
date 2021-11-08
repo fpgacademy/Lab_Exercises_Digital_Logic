@@ -1,0 +1,6 @@
+# Releases directory
+release/
+
+# iv Files
+*.swp
+

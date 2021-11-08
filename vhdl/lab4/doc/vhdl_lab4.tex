@@ -1,0 +1,164 @@
+\documentclass[epsfig,10pt,fullpage]{article}
+
+\newcommand{\LabNum}{4}
+\newcommand{\CommonDocsPath}{../../../common/docs}
+\input{\CommonDocsPath/preamble.tex}
+
+\begin{document}
+
+\centerline{\huge Digital Logic}
+~\\
+\centerline{\huge Laboratory Exercise \LabNum}
+~\\
+\centerline{\large Counters}
+~\\
+
+The purpose of this exercise is to build and use counters. The designed circuits are to be
+implemented on an Intel\textsuperscript{\textregistered} FPGA DE10-Lite, DE0-CV, DE1-SoC, or DE2-115 Board.
+
+~\\
+Students are expected to have a basic understanding of counters and sufficient familiarity
+with the VHDL hardware description language to implement various types of latches and flip-flops.
+
+\section*{Part I}
+\addcontentsline{toc}{1}{Part I}
+Consider the circuit in Figure~\ref{fig:asynchronous_counter}. It is a 4-bit synchronous 
+counter which uses four
+T-type flip-flops. The counter increments its value on each positive edge of the clock signal
+if the {\it Enable} signal is high. The counter is reset to 0 on the next positive
+clock edge if the synchronous {\it Clear} input is low.
+You are to implement an 8-bit counter of this type.
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[]{figures/figure1.pdf}
+	\end{center}
+\caption{A 4-bit counter.}
+\label{fig:asynchronous_counter}
+\end{figure}
+
+\begin{enumerate}
+\item Write a VHDL file that defines an 8-bit counter by using the structure
+depicted in Figure~\ref{fig:asynchronous_counter}. Your code should include a T 
+flip-flop entity that is instantiated
+eight times to create the counter. Compile the circuit. How many logic elements (LEs) are 
+used to implement your circuit? 
+\item Simulate your circuit to verify its correctness.
+\item Augment your VHDL file to use the pushbutton {\it KEY}$_0$ as the {\it Clock}
+input and switches $SW_1$ and $SW_0$ as {\it Enable} and {\it Clear} inputs, and
+7-segment displays {\it HEX1-0} to display the hexadecimal count as your circuit
+operates. Make the necessary pin assignments needed to implement the circuit on your
+DE-series board, and compile the circuit.
+\item Download your circuit into the FPGA chip and test its functionality by operating
+the switches.
+\item Implement a four-bit version of your circuit and use the Quartus\textsuperscript{\textregistered} RTL Viewer to
+see how the Quartus software synthesized the circuit. What are the differences in
+comparison with Figure~\ref{fig:asynchronous_counter}?
+\end{enumerate}
+
+\section*{Part II}
+\addcontentsline{toc}{2}{Part II}
+Another way to specify a counter is by using a register and adding 1 to its value. 
+This can be accomplished using the following VHDL statement:
+$$
+{\rm Q <= Q + 1;}
+$$
+\noindent
+Compile a 16-bit version of this counter and determine the number of LEs needed.  Use the RTL 
+Viewer to see the structure of this implementation and comment on the differences with the 
+design from Part I. Implement the counter on your DE-series board, using the displays 
+{\it HEX3-0} to show the counter value.
+
+\section*{Part III}
+\addcontentsline{toc}{4}{Part III}
+Design and implement a circuit that successively flashes digits 0 
+through 9 on the 7-segment display {\it HEX0}. Each digit should be 
+displayed for about one second. Use a counter to determine the one-second 
+intervals. The counter should be incremented by the 50-MHz clock signal 
+provided on the DE-series boards. Do not derive any other clock signals in your design--make 
+sure that all flip-flops in your circuit are clocked directly by the 50-MHz clock signal.
+A partial design of the required circuit is shown in Figure~\ref{fig:hint}. The figure
+shows how a large bit-width counter can be used to produce an enable signal for a smaller
+counter. The rate at which the smaller counter increments can be controlled by choosing an
+appropriate number of bits in the larger counter.
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[]{figures/figure_hint.pdf}
+	\end{center}
+\caption{Making a slow counter.}
+\label{fig:hint}
+\end{figure}
+
+\section*{Part IV}
+\addcontentsline{toc}{5}{Part IV}
+Design and implement a circuit that displays a word on four 7-segment displays {\it HEX}$3-0$.
+The word to be displayed for your DE-series board is given in Table~\ref{tab:word}.
+Make the letters rotate from right to left in intervals of about one second.
+The rotating pattern for the DE10-Lite is given in Table~\ref{tab:rotate}.
+If you are using the DE0-CV, DE1-SoC, or DE2-115, use the word given in Table~\ref{tab:word}.
+There are many ways to design the required circuit. One solution is to re-use the VHDL code 
+designed in Laboratory Exercise 1, Part V. Using that code, the main change needed is to 
+replace the two switches that are used to select the characters being rotated on the displays
+with a 2-bit counter that increments at one-second intervals.
+
+\begin{table}[H]
+\begin{center}
+	\begin{tabular}{l | r}
+	Board & Word \\
+	\hline
+	{\rule[0mm]{0mm}{5mm}}DE10-Lite & dE10 \\
+	DE0-CV &  dE0 \\
+	DE1-SoC &  dE1 \\
+	DE2-115 &  dE2 \\
+	\end{tabular}
+	\caption{DE-series boards and corresponding word to display}
+	\label{tab:word}
+	\end{center}
+\end{table}
+
+\begin{table}[H]
+\begin{minipage}[t]{12.5 cm}
+\begin{center}
+\begin{tabular}{c|cccc}
+Count& \multicolumn{4}{c}{Characters} \\
+\hline
+{\rule[0mm]{0mm}{5mm}00} & d & E & 1 & 0\\ 
+01 & E & 1 & 0 & d\\
+10 & 1 & 0 & d & E\\
+11 & 0 & d & E & 1\\
+\end{tabular}
+\end{center}
+\end{minipage}
+\caption{Rotating the word dE10 on four displays.}
+\label{tab:rotate}
+\end{table}
+
+\section*{Part V}
+\addcontentsline{toc}{6}{Part V}
+Augment your circuit from Part IV so that it can rotate the word over all of the
+7-segment displays on your DE-series board. The shifting pattern for the DE10-Lite is shown in
+Table~\ref{tab:rotate2}.
+
+\begin{table}[h]
+\begin{minipage}[t]{12.5 cm}
+\begin{center}
+\begin{tabular}{c|cccccc}
+Count& \multicolumn{6}{c}{Character pattern} \\
+\hline
+{\rule[0mm]{0mm}{5mm}000} & & & d & E & 1 & 0 \\ 
+001 & & d & E & 1 & 0 & \\
+010 & d & E & 1 & 0 & & \\
+011 & E & 1 & 0 & & & d\\
+100 & 1 & 0 & & & d & E \\
+101 & 0 & & & d  & E & 1 \\
+\end{tabular}
+\end{center}
+\end{minipage}
+\caption{Rotating the word dE10 on six displays.}
+\label{tab:rotate2}
+\end{table}
+
+
+\input{\CommonDocsPath/copyright.tex}
+\end{document}

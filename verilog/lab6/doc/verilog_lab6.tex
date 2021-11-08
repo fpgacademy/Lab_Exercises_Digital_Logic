@@ -1,0 +1,202 @@
+\documentclass[epsfig,10pt,fullpage]{article}
+
+\newcommand{\LabNum}{6}
+\newcommand{\CommonDocsPath}{../../../common/docs}
+\input{\CommonDocsPath/preamble.tex}
+
+\begin{document}
+
+\centerline{\huge Digital Logic}
+~\\
+\centerline{\huge Laboratory Exercise \LabNum}
+~\\
+\centerline{\large Adders, Subtractors, and Multipliers}
+~\\
+
+The purpose of this exercise is to examine arithmetic circuits that add, subtract,
+and multiply numbers. Each circuit will be described in Verilog and implemented on an 
+Intel\textsuperscript{\textregistered} FPGA DE10-Lite, DE0-CV, DE1-SoC, or DE2-115 board.
+
+\section*{Part I}
+\addcontentsline{toc}{1}{Part I}
+Consider again the four-bit ripple-carry adder circuit used in lab exercise 2; its diagram 
+is reproduced in Figure~\ref{fig:ripple_carry}.
+
+\begin{figure}[H]
+\centerline{
+\includegraphics{figures/ripple_carry}}
+\caption{A four-bit ripple carry adder.}
+\label{fig:ripple_carry}
+\end{figure}
+
+This circuit can be implemented using a '+' sign in Verilog. For example, the following code 
+fragment adds {\it n}-bit numbers $A$ and $B$ to produce outputs $sum$ and $carry$:
+
+\begin{center}
+\begin{minipage}[t]{12.5 cm}
+\begin{tabbing}
+ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\kill
+\>{\bf wire} [n-1:0] sum;\\
+\>{\bf wire} carry;\\
+\>\ldots \\
+\>{\bf assign} \{carry, sum\} = A + B;\\
+\end{tabbing}
+\end{minipage}
+\end{center}
+
+Use this construct to implement a circuit shown in Figure~\ref{fig:accumulator}. This
+circuit, which is often called an {\it accumulator}, is used to add the value of an input
+$A$ to itself repeatedly. The circuit includes a carry out from the adder, as well as an
+{\it overflow} output signal. If the input $A$ is considered as a 2's-complement number, 
+then {\it overflow} should be set to~1
+in the case where the output {\it sum} produced does not represent a correct
+2's-complement result.
+
+~\\
+Perform the following steps:
+\begin{enumerate}
+\item Create a new Quartus\textsuperscript{\textregistered} project. Write Verilog code that describes the 
+circuit in Figure~\ref{fig:accumulator}.
+\item Connect input $A$ to switches {\it SW}$_{7-0}$, use {\it KEY}$_0$ as an 
+active-low asynchronous reset, and use {\it KEY}$_1$ as a manual clock input. The sum 
+from the adder should be displayed on the red lights {\it LEDR}$_{7-0}$, the registered 
+carry signal should be displayed on {\it LEDR}$_{8}$, and the registered {\it overflow} 
+signal should be displayed on {\it LEDR}$_{9}$. Show the registered values of {\it A}
+and {\it S} as hexadecimal numbers on the 7-segment displays HEX$3-2$ and HEX$1-0$. 
+\item Make the necessary pin assignments needed to implement the circuit on your
+DE-series board, and compile the circuit.
+\item Use timing simulation to verify the correct operation of the
+circuit. Once the simulation works properly, download the circuit onto your DE-series board 
+and test it by using different values of~$A$. Be sure to check that the {\it overflow} 
+output works correctly.
+\end{enumerate}
+
+\begin{figure}[H]
+\centerline{
+\includegraphics{figures/accumulator}}
+\caption{An eight-bit accumulator circuit.}
+\label{fig:accumulator}
+\end{figure}
+
+\section*{Part II}
+\addcontentsline{toc}{2}{Part II}
+Extend the circuit from Part I to be able to both add and subtract numbers. To do so,
+introduce an {\it add\_sub} input to your circuit. When {\it add\_sub} is 1, your circuit should
+subtract $A$ from $S$, and when {\it add\_sub} is 0 your circuit should add 
+$A$ to $S$ as in Part I.
+
+\section*{Part III}
+\addcontentsline{toc}{3}{Part III}
+Figure~\ref{fig:binary_multiplication}$a$ gives an example of paper-and-pencil multiplication $P = A \times B$, where $A = 11$ and $B = 12$.
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics{figures/figure3.pdf}
+	\end{center}
+	\caption{Multiplication of binary numbers.}
+	\label{fig:binary_multiplication}
+\end{figure}
+
+We compute $P = A \times B$ as an addition of summands. The first summand is equal to $A$ times the ones digit of $B$.
+The second summand is $A$ times the tens digit of $B$, shifted one position to the left. We add the two summands to form the product $P = 132$.
+
+~\\
+Part $b$ of the figure shows the same example using four-bit binary numbers.
+To compute $P = A \times B$, we first form summands by multiplying $A$ by each digit of $B$. Since each digit of
+$B$ is either 1 or 0, the summands are either shifted versions of $A$ or 0000. Figure ~\ref{fig:binary_multiplication}$c$
+shows how each summand can be formed by using the Boolean AND operation of $A$ with the appropriate bit of $B$.
+
+~\\
+A four-bit circuit that implements $P = A \times B$ is illustrated in Figure~\ref{fig:array_mult}. Because of its
+regular structure, this type of multiplier circuit is called an {\it array multiplier}. The shaded areas correspond to the shaded columns in Figure~\ref{fig:binary_multiplication}$c$. In each row of the multiplier AND gates are used to produce the summands,
+and full adder modules are used to generate the required sums.
+
+\begin{figure}[htb]
+	\begin{center}
+		\includegraphics[]{figures/figure4.pdf}
+	\end{center}
+	\caption{An array multiplier circuit.}
+	\label{fig:array_mult}
+\end{figure}
+
+Perform the following steps to implement the array multiplier circuit:
+
+\begin{enumerate}
+\item Create a new Quartus project.
+\item Generate the required Verilog file. Use switches {\it SW}$_{7-4}$ to represent the 
+number $A$ and switches {\it SW}$_{3-0}$ to represent $B$. The hexadecimal values of~$A$ 
+and $B$ are to be displayed on the 7-segment displays {\it HEX}2 and {\it HEX}0, respectively.
+The result ~$P = A \times B$~ is to be displayed on {\it HEX}$5-4$.
+\item Make the necessary pin assignments needed to implement the circuit on your
+DE-series board, and compile the circuit.
+\item Use simulation to verify your design.
+\item Download your circuit onto your DE-series board and test its functionality.
+\end{enumerate}
+
+\section*{Part IV}
+\addcontentsline{toc}{4}{Part IV}
+In Part III, an array multiplier was implemented using full adder modules. At a higher level, a row of full adders functions as an $n$-bit adder and the array multiplier circuit can be represented as shown in Figure~\ref{fig:array_mult_adders}.
+
+\begin{figure}[H]
+\centerline{
+\includegraphics{figures/array_mult_adders}}
+\caption{An array multiplier implemented using $n$-bit adders.}
+\label{fig:array_mult_adders}
+\end{figure}
+
+Each $n$-bit adder adds a shifted version of $A$ for a given row and the {\it partial
+product} of the row above. Abstracting the multiplier circuit as a sequence of additions 
+allows us to build larger multipliers. The multiplier should consist of n-bit adders
+arranged in a structure shown in Figure~\ref{fig:array_mult_adders}. Use this approach to 
+implement an 8 {\sf x} 8 multiplier circuit with registered
+inputs and outputs, as shown in Figure~\ref{fig:registered_mult}.
+
+\begin{figure}[H]
+\centerline{
+\includegraphics{figures/registered_mult}}
+\caption{A registered multiplier circuit.}
+\label{fig:registered_mult}
+\end{figure}
+
+Perform the following steps:
+\begin{enumerate}
+\item Create a new Quartus project and write the required Verilog file.
+\item Use switches {\it SW}$_{7-0}$ to provide the data inputs to the circuit. Use
+{\it SW}$_9$ as the enable signal {\it EA} for register {\it A}, and use {\it SW}$_8$
+as the enable for register {\it B}.  When {\it SW}$_9 = 1$ display the contents of
+register A on the red lights LEDR, and display the contents of register B on these lights
+when {\it SW}$_8 = 1$. Use {\it KEY}$_0$ as a synchronous reset input, and use 
+{\it KEY}$_1$ as a manual clock signal.  Show the product~$P = A \times B$~ as a
+hexadecimal number on the 7-segment displays {\it HEX3-0}.
+\item Make the necessary pin assignments needed to implement the circuit on your
+DE-series board, and compile the circuit.
+\item Test the functionality of your design by inputting various data values and observing
+the generated products.
+\end{enumerate}
+
+\section*{Part V}
+\addcontentsline{toc}{5}{Part V}
+Part IV showed how to implement multiplication $A \times B$ as a sequence of additions, 
+by accumulating the shifted versions of $A$ one row at a time. Another way to implement 
+this circuit is to perform addition using an adder tree.
+
+An adder tree is a method of adding several numbers together in a parallel fashion. This 
+idea is illustrated in Figure~\ref{fig:adder_tree}. In the figure, numbers 
+$A$, $B$, $C$, $D$, $E$, $F$, $G$, and $H$ are added together in parallel.
+The addition $A + B$ happens simultaneously with $C + D$, $E + F$ and $G + H$. The 
+result of these operations are then added in parallel
+again, until the final sum $P$ is computed.
+
+\begin{figure}[H]
+\centerline{
+\includegraphics{figures/adder_tree}}
+\caption{An example of adding 8 numbers using an adder tree.}
+\label{fig:adder_tree}
+\end{figure}
+
+In this part you are to implement an 8 {\sf x} 8 multiplier circuit by using the adder-tree
+approach. Inputs $A$ and $B$, as well as the output $P$ should be registered as in Part IV. 
+
+
+\input{\CommonDocsPath/copyright.tex}
+\end{document}

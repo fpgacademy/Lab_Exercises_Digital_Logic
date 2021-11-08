@@ -1,0 +1,201 @@
+\documentclass[epsfig,10pt,fullpage]{article}
+
+\newcommand{\LabNum}{12}
+\newcommand{\CommonDocsPath}{../../../common/docs}
+\input{\CommonDocsPath/preamble.tex}
+
+\begin{document}
+
+\centerline{\huge Digital Logic}
+~\\
+\centerline{\huge Laboratory Exercise \LabNum}
+~\\
+\centerline{\large Basic Digital Signal Processing}
+~\\
+
+This is an exercise in using the audio coder/decoder (CODEC) on the  DE1-SoC or DE2-115 board.  
+The exercise involves connecting a microphone to the audio CODEC to provide input sound, 
+altering the received sound by filtering out noise, and then playing the resulting 
+sound through speakers/headphones. In addition to a DE-series board, a microphone and
+speakers or headphones are required.
+
+
+\section*{Background}
+\addcontentsline{toc}{1}{Background}
+Sounds, such as speech and music, are signals that change over time. The amplitude of a 
+signal determines the volume at which we hear it. The way the signal changes over time 
+determines the type of sounds we hear. For example, an 'ah' sound is represented by a waveform 
+shown in Figure~\ref{fig:original_waveform}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=4.5in]{figures/sound_wave_ah.pdf}
+\caption{A waveform for an 'ah' sound.}
+\label{fig:original_waveform}
+\end{figure}
+
+The waveform is an analog signal, which can be stored in a digital form by using a relatively 
+small number of samples that represent the analog values at certain points in time. The process 
+of producing such digital signals is called {\it sampling}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=4.5in]{figures/sampled_waveform.pdf}
+\caption{A sampled waveform for an 'ah' sound.}
+\label{fig:sampled_waveform}
+\end{figure}
+
+The points in Figure~\ref{fig:sampled_waveform} provide a sampled waveform. All points are spaced 
+equally in time and they trace the original waveform.
+
+~\\
+The  DE1-SoC, and DE2-115 board are equipped with an audio CODEC capable of sampling sound from a microphone and providing it
+as input to a circuit. By default, the CODEC provides 48000 samples per second, which is sufficient to accurately represent
+audible sounds.
+
+~\\
+This exercise involves the design of several circuits that take input from a microphone
+through the CODEC, record and process this sound data, and then play it back through 
+speakers. To simplify the task, a simple system that can record and playback sounds on
+your DE-series board is provided as a "starter kit". The system, shown in 
+Figure~\ref{fig:audio_system}, comprises a {\sf Clock Generator}, an
+{\sf Audio CODEC Interface}, and an {\sf Audio/Video Configuration} modules. This interface is 
+a simplified version of the 
+University Program Audio IP Core that is provided on Intel's FPGA University Program website.
+
+\begin{figure}[H]
+\centering
+\includegraphics{figures/audio_system.pdf}
+\caption{Audio System for this exercise.}
+\label{fig:audio_system}
+\end{figure}
+
+The left-hand side of Figure~\ref{fig:audio_system} shows the inputs and outputs of the system. These I/O ports
+supply the clock inputs, as well as connect the {\sf Audio CODEC} and {\sf Audio/Video Configuration} modules to the corresponding
+peripheral devices on the Intel\textsuperscript{\textregistered} DE1-SoC and DE2-115 board. In the middle of the figure, a set 
+of signals to and from the {\sf Audio CODEC Interface} module is shown. These signals 
+allow the circuit depicted on the right-hand side to record sounds from a microphone and 
+play them back via speakers.
+
+~\\
+The system works as follows. Upon reset, the {\sf Audio/Video Configuration} begins an autoinitialization sequence. The sequence sets up the
+audio device to sample microphone input at a rate of 48kHz and produce output through 
+the speakers at the same rate.
+Once the autoinitialization is complete, the {\sf Audio CODEC} begins reading the data from the microphone once every 48000$^{th}$ of a second, and sends it
+to the {\sf Audio CODEC Interface} core in the system. Once received, the sample is stored in a 128-element buffer in the {\sf Audio CODEC Interface} core.
+The first element of the buffer is always visible on the {\sf readdata\_left} and {\sf readdata\_right} outputs when the {\sf read\_ready} signal is asserted.
+The next element can be read by asserting the {\sf read} signal, which ejects the current sample and a new one appears one or more clock cycles later, if
+the {\sf read\_ready} signal is asserted.
+
+~\\
+To output sound through the speakers a similar procedure is followed. Your circuit should observe the {\sf write\_ready} signal, and if asserted
+write a sample to the Audio CODEC by providing it at the {\sf writedata\_left} and {\sf writedata\_right} inputs and asserting the {\sf write} signal.
+This operation stores a sample in a buffer inside of the {\sf Audio CODEC Interface}, which will then send the sample to the speakers at the right time.
+
+~\\
+A starter kit that contains this design is provided as part of this exercise.
+
+\section*{Part I}
+\addcontentsline{toc}{2}{Part I}
+In this part of the exercise, you are to make a simple modification to the provided
+starter kit circuit to pass the input from the microphone to the speakers. You should
+take care to read data from and write data to the {\sf Audio CODEC Interface} only when its ready signals are asserted.
+
+~\\
+Compile your circuit and download it onto an Intel DE1-SoC or DE2-115 board. Connect microphone and speakers to the {\sf Mic} and {\sf Line Out}
+ports of the board and speak to the microphone to hear your voice through the speakers.
+
+\section*{Part II}
+\addcontentsline{toc}{3}{Part II}
+In this part, you will learn a basic signal processing technique known as {\it filtering}. Filtering is a process of adjusting a signal -
+for example, removing noise. Noise in a sound waveform is represented by small, but frequent changes to the amplitude of the signal. A simple logic
+circuit that achieves the task of noise-filtering is an averaging Finite Impulse Response (FIR) filter. The schematic diagram of the filter
+is shown in Figure~\ref{fig:eight_tap_fir_filter}.
+
+\begin{figure}[H]
+\centering
+\includegraphics{figures/eight_tap_fir_filter.pdf}
+\caption{A simple averaging FIR filter.}
+\label{fig:eight_tap_fir_filter}
+\end{figure}
+
+An averaging filter, like the one shown in Figure~\ref{fig:eight_tap_fir_filter}, removes noise from a sound by averaging the values of
+adjacent samples. In this particular case, it removes small deviations in sound by looking at changes in the adjacent 8 samples.
+When using low-quality microphones, this filter should remove the noise produced when you speak to the microphone, making your voice sound clearer.
+
+~\\
+You are to implement the circuit shown in Figure~\ref{fig:eight_tap_fir_filter} to process the sound from the microphone, and output the filtered sound
+through the speakers. Do you notice any difference between the quality of sound in this part as compared to Part I?
+
+~\\
+{\bf NOTE:}
+~\\
+It is possible to obtain high-quality microphones with noise-canceling capabilities. In such circumstances, you are unlikely
+to hear any effect from using this filter. If this is the case, we suggest introducing some noise into the sound by adding
+the output of the circuit in Figure~\ref{fig:noise_circuit} to the sample produced by the {\sf Audio CODEC}.
+
+\begin{figure}[h]
+\begin{center}
+\begin{minipage}[t]{12.5 cm}
+\begin{tabbing}
+ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\=ZZ\kill
+{\bf module} ~noise\_generator (clk, enable, Q);\\
+\>{\bf input} clk, enable;\\
+\>{\bf output} [23:0] Q;\\
+\>{\bf reg} [2:0] counter;\\
+~\\
+\>always@(posedge clk)\\
+\>\>if (enable)\\
+\>\>\>counter = counter + 1'b1;\\
+\>~\\
+\>{\bf assign} Q = \{\{10\{counter[2]\}\}, counter, 11'd0\};\\
+{\bf endmodule}\\
+\end{tabbing}
+\end{minipage}
+\end{center}
+\caption{Circuit to generate some noise.}
+\label{fig:noise_circuit}
+\end{figure}
+
+The circuit is a simple counter, whose value should be interpreted as a signed value. The circuit should be clocked by a 50MHz clock, and the enable signal
+should be driven high when the {\sf Audio CODEC} module can both produce and accept a new sample.
+
+~\\
+To hear the effect of the noise generator, add the values produced by the circuit to each sample of sound from the {\sf Audio CODEC} in the circuit in Part I.
+
+\section*{Part III}
+\addcontentsline{toc}{4}{Part III}
+The implementation of the averaging filter in Part II may have been effective in removing some of the noise, and all of the noise produced by the noise generator.
+However, if your microphone is of low-quality or you increase the width of the counter in the noise generator, the filter in Part II would be insufficient
+to remove the noise. The reason for this is because the filter in Part II only looked at a very small time frame over which the sound waveform was
+changing. This can be remedied by making the filter larger, taking an average of more samples.
+
+~\\
+In this part, you are to experiment with the size of the filter to determine the number of samples over which you have to average sound input to remove
+background noise. To do this more effectively, use the design of an averaging FIR filter shown in Figure~\ref{fig:scalable_averaging_fir}.
+
+\begin{figure}[H]
+\centering
+\includegraphics{figures/n_tap_averaging_fir_filter.pdf}
+\caption{N-sample averaging FIR filter.}
+\label{fig:scalable_averaging_fir}
+\end{figure}
+
+To compute the average of the last $N$ samples, this circuit first divides the input sample by $N$. Then, the resulting value
+is stored it in a First-In First-out (FIFO) buffer of length $N$ and added to the accumulator. To make sure the value
+in the accumulator is the average of the last $N$ samples, the circuit subtracts the value that comes out of the FIFO,
+which represents the $(n+1)^{th}$ sample.
+
+~\\
+Implement, compile and download the circuit onto an Intel DE1-SoC, or DE2-115 board. Connect microphone and speakers to the {\sf Mic} and {\sf Line Out}
+ports of the board and speak to the microphone to hear your voice through the speakers. Experiment with different values of $N$ to see what happens
+to your voice and any background noise, remembering to divide the samples by appropriate value. We recommend experimenting with values of $N$ that are a power of 2, to make the division easier.
+
+~\\
+If you have a portable music player, with a connector such that you can supply input to your circuit through the {\sf Mic} port, try experimenting with
+different sizes of the filter and its effect on the song you play. 
+
+
+
+\input{\CommonDocsPath/copyright.tex}
+\end{document}
