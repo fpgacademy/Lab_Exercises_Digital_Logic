@@ -23,10 +23,8 @@ BEGIN
     nData <= NOT Data;
 
     W(0) <= '1' WHEN (Sel = '1' AND (Addr = "000")) ELSE '0';
-	 -- ... add code here
     reg_R0: regne PORT MAP (nData, Clock, Resetn, W(0), H0);
-	 -- ... add code here
-
+    -- ... fill in the rest of the code for ports H1, ..., H5
 END Behavior;
 
 LIBRARY ieee;

@@ -37,7 +37,7 @@ module part4 (KEY, SW, CLOCK_50, HEX5, HEX4, HEX3, HEX2, HEX1, HEX0, LEDR);
             DIN = 16'bxxxxxxxxxxxxxxxx;
 
     // module regn(R, Rin, Clock, Q);
-    regn #(.n(9)) U5 (DOUT[8:0], LED_reg_cs & W, CLOCK_50, LED_reg);
+    regn #(.n(9)) U5 (DOUT[8:0], KEY[0], LED_reg_cs & W, CLOCK_50, LED_reg);
     assign LEDR[8:0] = LED_reg;
     assign LEDR[9] = Run;
 
@@ -45,7 +45,7 @@ module part4 (KEY, SW, CLOCK_50, HEX5, HEX4, HEX3, HEX2, HEX1, HEX0, LEDR);
         HEX5, HEX4, HEX3, HEX2, HEX1, HEX0);
 
     // module regn(R, Rin, Clock, Q);
-    regn #(.n(9)) U7 (SW[8:0], 1'b1, CLOCK_50, SW_reg); // SW[9] is used for Run
+    regn #(.n(9)) U7 (SW[8:0], KEY[0], 1'b1, CLOCK_50, SW_reg); // SW[9] is used for Run
 
 endmodule
 

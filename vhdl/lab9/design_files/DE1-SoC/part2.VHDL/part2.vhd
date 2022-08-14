@@ -38,6 +38,7 @@ BEGIN
    U1: proc PORT MAP (DIN, Resetn, PClock, Run, Done);
    LEDR(0) <= Done;
    LEDR(9) <= Run;
+   LEDR(8 DOWNTO 1) <= "00000000";
 
    U2: inst_mem PORT MAP (pc, MClock, DIN);
    U3: count5 PORT MAP (Resetn, MClock, pc);

@@ -17,15 +17,15 @@ ARCHITECTURE Behavior OF proc IS
                 Q    : OUT STD_LOGIC_VECTOR(15 DOWNTO 0));
     END COMPONENT;
     COMPONENT dec3to8
-        PORT ( W   : IN   STD_LOGIC_VECTOR(2 DOWNTO 0);
+        PORT ( E   : IN   STD_LOGIC;
+               W   : IN   STD_LOGIC_VECTOR(2 DOWNTO 0);
                Y   : OUT  STD_LOGIC_VECTOR(0 TO 7));
     END COMPONENT;
-
     COMPONENT regn
         GENERIC ( n : INTEGER := 16);
-        PORT ( R           : IN STD_LOGIC_VECTOR(n-1 DOWNTO 0);
-               Rin, Clock  : IN STD_LOGIC;
-               Q           : OUT STD_LOGIC_VECTOR(n-1 DOWNTO 0));
+        PORT ( R                   : IN STD_LOGIC_VECTOR(n-1 DOWNTO 0);
+               Resetn, E, Clock    : IN STD_LOGIC;
+               Q                   : OUT STD_LOGIC_VECTOR(n-1 DOWNTO 0));
     END COMPONENT;
     COMPONENT flipflop 
         PORT (  D, Resetn, Clock  : IN  STD_LOGIC;
@@ -34,6 +34,17 @@ ARCHITECTURE Behavior OF proc IS
    
     TYPE State_type IS (T0, T1, T2, T3, T4, T5);
     SIGNAL Tstep_Q, Tstep_D: State_type;
+    SIGNAL Sel : STD_LOGIC_VECTOR(3 DOWNTO 0); -- bus selector
+    SIGNAL Rin : STD_LOGIC_VECTOR(0 TO 7); -- r0, ..., r7 register enables
+    SIGNAL Sum : STD_LOGIC_VECTOR(15 DOWNTO 0);
+    SIGNAL rXin, IRin, Done, ADDRin, DOUTin, Imm, Ain, Gin, AddSub, ALUand : STD_LOGIC;
+    SIGNAL III, rX, rY : STD_LOGIC_VECTOR(2 DOWNTO 0);
+    SIGNAL Xreg : STD_LOGIC_VECTOR(0 TO 7);
+    SIGNAL r0, r1, r2, r3, r4, r5, r6, PC, A : STD_LOGIC_VECTOR(15 DOWNTO 0);
+    SIGNAL G : STD_LOGIC_VECTOR(15 DOWNTO 0);
+    SIGNAL IR, BusWires : STD_LOGIC_VECTOR(15 DOWNTO 0);
+    SIGNAL pc_incr, W_D : STD_LOGIC;
+
     CONSTANT mv : STD_LOGIC_VECTOR(2 DOWNTO 0) := "000";
     CONSTANT mvt : STD_LOGIC_VECTOR(2 DOWNTO 0) := "001";
     CONSTANT add : STD_LOGIC_VECTOR(2 DOWNTO 0) := "010";
@@ -41,35 +52,26 @@ ARCHITECTURE Behavior OF proc IS
     CONSTANT ld : STD_LOGIC_VECTOR(2 DOWNTO 0) := "100";
     CONSTANT st : STD_LOGIC_VECTOR(2 DOWNTO 0) := "101";
     CONSTANT and_it : STD_LOGIC_VECTOR(2 DOWNTO 0) := "110";
-    CONSTANT Sel_R0 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0000";
-    CONSTANT Sel_R1 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0001";
-    CONSTANT Sel_R2 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0010";
-    CONSTANT Sel_R3 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0011";
-    CONSTANT Sel_R4 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0100";
-    CONSTANT Sel_R5 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0101";
-    CONSTANT Sel_R6 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0110";
-    CONSTANT Sel_PC : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0111";
-    CONSTANT Sel_G : STD_LOGIC_VECTOR(3 DOWNTO 0) := "1000";
-    CONSTANT Sel_D : STD_LOGIC_VECTOR(3 DOWNTO 0) := "1001";
-    CONSTANT Sel_D8 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "1010";
-             -- Sel_D is immediate data, Sel_D8 is immediate data << 8
-    CONSTANT Sel_DIN : STD_LOGIC_VECTOR(3 DOWNTO 0) := "1011";
-    SIGNAL Sel : STD_LOGIC_VECTOR(3 DOWNTO 0); -- bus selector
-    SIGNAL Rin : STD_LOGIC_VECTOR(0 TO 7);
-    SIGNAL Sum : STD_LOGIC_VECTOR(15 DOWNTO 0);
-    SIGNAL IRin, Done, ADDRin, DOUTin, IMM, Ain, Gin, AddSub, ALUand : STD_LOGIC;
-    SIGNAL III, rX, rY : STD_LOGIC_VECTOR(2 DOWNTO 0);
-    SIGNAL Xreg : STD_LOGIC_VECTOR(0 TO 7);
-    SIGNAL R0, R1, R2, R3, R4, R5, R6, PC, A, G : STD_LOGIC_VECTOR(15 DOWNTO 0);
-    SIGNAL IR, BusWires : STD_LOGIC_VECTOR(15 DOWNTO 0);
-    SIGNAL pc_inc, W_D : STD_LOGIC;
+    -- selectors for the BusWires multiplexer
+    CONSTANT SEL_R0 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0000";
+    CONSTANT SEL_R1 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0001";
+    CONSTANT SEL_R2 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0010";
+    CONSTANT SEL_R3 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0011";
+    CONSTANT SEL_R4 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0100";
+    CONSTANT SEL_R5 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0101";
+    CONSTANT SEL_R6 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0110";
+    CONSTANT SEL_PC : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0111";
+    CONSTANT SEL_G : STD_LOGIC_VECTOR(3 DOWNTO 0) := "1000";
+    CONSTANT SEL_IR8_IR8_0 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "1001"; -- sign-extended #D
+    CONSTANT SEL_IR7_0_0 : STD_LOGIC_VECTOR(3 DOWNTO 0) := "1010" ;  -- #D << 8
+    CONSTANT SEL_DIN : STD_LOGIC_VECTOR(3 DOWNTO 0) := "1011" ;  -- data in
 BEGIN
     III <= IR(15 DOWNTO 13);
-    IMM <= IR(12);
+    Imm <= IR(12);
     rX <= IR(11 DOWNTO 9);
     rY <= IR(2 DOWNTO 0);
-    decX: dec3to8 PORT MAP (rX, Xreg);
-    
+    decX: dec3to8 PORT MAP (rXin, rX, Rin); -- produce r0 - r7 register enables
+
     statetable: PROCESS(Tstep_Q, Run, Done)
     BEGIN
         CASE Tstep_Q IS
@@ -109,16 +111,18 @@ BEGIN
     -- 101 0: st   rX,[rY]  [rY] <- rX
     -- 110 0: and  rX,rY    rX <- rX & rY
     -- 110 1: and  rX,#D    rX <- rX & D
-    controlsignals: PROCESS (Tstep_Q, III, IMM, Xreg, rX, rY, Run)
+
+    controlsignals: PROCESS (Tstep_Q, III, Imm, rX, rY, Run)
     BEGIN
-        Done <= '0'; Ain <= '0'; Gin <= '0'; AddSub <= '0'; -- default assignments
-        IRin <= '0'; Rin <= "00000000"; Sel <= "----"; ADDRin <= '0'; DOUTin <= '0';
-        W_D <= '0'; pc_inc <= '0'; ALUand <= '0';
+        -- default assignments
+        rXin <= '0'; Ain <= '0'; Gin <= '0'; AddSub <= '0'; IRin <= '0'; Sel <= "----";
+        ADDRin <= '0'; DOUTin <= '0'; W_D <= '0'; ALUand <= '0'; Done <= '0';
+        pc_incr <= '0';
         CASE Tstep_Q IS
             WHEN T0 =>
-                Sel <= Sel_PC;  -- put PC onto the internal bus
+                Sel <= SEL_PC;  -- put PC onto the internal bus
                 ADDRin <= '1';
-                pc_inc <= Run;  -- increment PC
+                pc_incr <= Run; -- increment PC
             WHEN T1 =>          -- wait cycle for synchronous memory
                 null;
             WHEN T2 => -- store instruction on DIN into IR
@@ -126,12 +130,12 @@ BEGIN
             WHEN T3 => -- define signals in time step T1
                 CASE III IS
                     WHEN mv =>
-                        IF IMM = '0' THEN Sel <= '0' & rY;  -- mv rX, rY
-                        ELSE Sel <= Sel_D;                  -- mv rX, #D
+                        IF Imm = '0' THEN Sel <= '0' & rY;  -- mv rX, rY
+                        ELSE Sel <= SEL_IR8_IR8_0;          -- mv rX, #D
                         END IF;
-                        Rin <= Xreg;
+                        rXin <= '1';                        -- enable rX register
                         Done <= '1';
-                    WHEN mvt =>                             -- mvt Rx, #D
+                    WHEN mvt =>
                         -- ... your code goes here
                     WHEN add | sub | and_it =>
                         -- ... your code goes here
@@ -161,14 +165,12 @@ BEGIN
                         -- ... your code goes here
                     WHEN ld =>
                         -- ... your code goes here
-                    WHEN st =>      -- wait cycle for synchronous memory
-                        -- ... your code goes here
                     WHEN OTHERS =>
                         null;
                 END CASE;
         END CASE;
     END PROCESS;
-
+   
     fsmflipflops: PROCESS (Clock, Resetn, Tstep_D)
     BEGIN
         IF (Resetn = '0') THEN
@@ -176,23 +178,23 @@ BEGIN
         ELSIF (rising_edge(Clock)) THEN
             Tstep_Q <= Tstep_D;
         END IF;
-    END PROCESS;   
+    END PROCESS;     
    
-    reg_0:  regn PORT MAP (BusWires, Rin(0), Clock, R0);
-    reg_1:  regn PORT MAP (BusWires, Rin(1), Clock, R1);
-    reg_2:  regn PORT MAP (BusWires, Rin(2), Clock, R2);
-    reg_3:  regn PORT MAP (BusWires, Rin(3), Clock, R3);
-    reg_4:  regn PORT MAP (BusWires, Rin(4), Clock, R4);
-    reg_5:  regn PORT MAP (BusWires, Rin(5), Clock, R5);
-    reg_6:  regn PORT MAP (BusWires, Rin(6), Clock, R6);
+    reg_0:  regn PORT MAP (BusWires, Resetn, Rin(0), Clock, r0);
+    reg_1:  regn PORT MAP (BusWires, Resetn, Rin(1), Clock, r1);
+    reg_2:  regn PORT MAP (BusWires, Resetn, Rin(2), Clock, r2);
+    reg_3:  regn PORT MAP (BusWires, Resetn, Rin(3), Clock, r3);
+    reg_4:  regn PORT MAP (BusWires, Resetn, Rin(4), Clock, r4);
+    reg_5:  regn PORT MAP (BusWires, Resetn, Rin(5), Clock, r5);
+    reg_6:  regn PORT MAP (BusWires, Resetn, Rin(6), Clock, r6);
 
     -- pc_count(R, Resetn, Clock, E, L, Q);
-    Upc: pc_count PORT MAP (BusWires, Resetn, Clock, pc_inc, Rin(7), PC);
+    Upc: pc_count PORT MAP (BusWires, Resetn, Clock, pc_incr, Rin(7), PC);
 
-    reg_A: regn PORT MAP (BusWires, Ain, Clock, A);
-    reg_ADDR: regn PORT MAP (BusWires, ADDRin, Clock, ADDR);
-    reg_DOUT: regn PORT MAP (BusWires, DOUTin, Clock, DOUT);
-    reg_IR: regn PORT MAP (DIN, IRin, Clock, IR);
+    reg_A:  regn PORT MAP (BusWires, Resetn, Ain, Clock, A);
+    reg_ADDR: regn PORT MAP (BusWires, Resetn, ADDRin, Clock, ADDR);
+    reg_DOUT: regn PORT MAP (BusWires, Resetn, DOUTin, Clock, DOUT);
+    reg_IR: regn PORT MAP (DIN, Resetn, IRin, Clock, IR);
 
     reg_W: flipflop PORT MAP (W_D, Resetn, Clock, W);
     
@@ -209,24 +211,24 @@ BEGIN
         END IF;
     END PROCESS;
 
-    reg_G: regn PORT MAP (Sum, Gin, Clock, G);
+    reg_G: regn PORT MAP (Sum, Resetn, Gin, Clock, G);
 
-    busmux: PROCESS (Sel, R0, R1, R2, R3, R4, R5, R6, PC, G, IR, DIN)
+    busmux: PROCESS (Sel, r0, r1, r2, r3, r4, r5, r6, PC, G, IR, DIN)
     BEGIN
         CASE Sel IS
-            WHEN Sel_R0 => BusWires <= R0;
-            WHEN Sel_R1 => BusWires <= R1;
-            WHEN Sel_R2 => BusWires <= R2;
-            WHEN Sel_R3 => BusWires <= R3;
-            WHEN Sel_R4 => BusWires <= R4;
-            WHEN Sel_R5 => BusWires <= R5;
-            WHEN Sel_R6 => BusWires <= R6;
-            WHEN Sel_PC => BusWires <= PC;
-            WHEN Sel_G => BusWires <= G;
-            WHEN Sel_D => BusWires <= "0000000" & IR(8 DOWNTO 0);
-            WHEN Sel_D8 => BusWires <= IR(7 DOWNTO 0) & "00000000";
-            WHEN Sel_DIN => BusWires <= DIN;
-            WHEN OTHERS => BusWires <= (OTHERS => '-');
+            WHEN SEL_R0 => BusWires <= r0;
+            WHEN SEL_R1 => BusWires <= r1;
+            WHEN SEL_R2 => BusWires <= r2;
+            WHEN SEL_R3 => BusWires <= r3;
+            WHEN SEL_R4 => BusWires <= r4;
+            WHEN SEL_R5 => BusWires <= r5;
+            WHEN SEL_R6 => BusWires <= r6;
+            WHEN SEL_PC => BusWires <= PC;
+            WHEN SEL_G => BusWires <= G;
+            WHEN SEL_IR8_IR8_0 => BusWires <= (15 DOWNTO 9 => IR(8)) & IR(8 DOWNTO 0);
+            WHEN SEL_IR7_0_0 => BusWires <= IR(7 DOWNTO 0) & "00000000";
+            WHEN SEL_DIN => BusWires <= DIN;
+            WHEN OTHERS => BusWires <= (OTHERS => '0');
         END CASE;
     END PROCESS;   
 END Behavior;
@@ -263,25 +265,30 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 
 ENTITY dec3to8 IS
-    PORT ( W   : IN   STD_LOGIC_VECTOR(2 DOWNTO 0);
+    PORT ( E   : IN   STD_LOGIC;
+           W   : IN   STD_LOGIC_VECTOR(2 DOWNTO 0);
            Y   : OUT  STD_LOGIC_VECTOR(0 TO 7));
 END dec3to8;
 
 ARCHITECTURE Behavior OF dec3to8 IS
 BEGIN
-    PROCESS (W)
+    PROCESS (E, W)
     BEGIN
-        CASE W IS
-            WHEN "000" => Y <= "10000000";
-            WHEN "001" => Y <= "01000000";
-            WHEN "010" => Y <= "00100000";
-            WHEN "011" => Y <= "00010000";
-            WHEN "100" => Y <= "00001000";
-            WHEN "101" => Y <= "00000100";
-            WHEN "110" => Y <= "00000010";
-            WHEN "111" => Y <= "00000001";
-            WHEN OTHERS => Y <= "00000000";
-        END CASE;
+        IF E = '0'THEN
+            Y <= "00000000";
+        ELSE
+            CASE W IS
+                WHEN "000" => Y <= "10000000";
+                WHEN "001" => Y <= "01000000";
+                WHEN "010" => Y <= "00100000";
+                WHEN "011" => Y <= "00010000";
+                WHEN "100" => Y <= "00001000";
+                WHEN "101" => Y <= "00000100";
+                WHEN "110" => Y <= "00000010";
+                WHEN "111" => Y <= "00000001";
+                WHEN OTHERS => Y <= "00000000";
+            END CASE;
+        END IF;
     END PROCESS;
 END Behavior;
 
@@ -290,9 +297,9 @@ USE ieee.std_logic_1164.all;
 
 ENTITY regn IS
     GENERIC ( n : INTEGER := 16);
-    PORT ( R           : IN  STD_LOGIC_VECTOR(n-1 DOWNTO 0);
-           Rin, Clock  : IN  STD_LOGIC;
-           Q           : OUT STD_LOGIC_VECTOR(n-1 DOWNTO 0));
+    PORT ( R                   : IN  STD_LOGIC_VECTOR(n-1 DOWNTO 0);
+           Resetn, E, Clock    : IN  STD_LOGIC;
+           Q                   : OUT STD_LOGIC_VECTOR(n-1 DOWNTO 0));
 END regn;
 
 ARCHITECTURE Behavior OF regn IS
@@ -300,7 +307,9 @@ BEGIN
     PROCESS (Clock)
     BEGIN
         IF Clock'EVENT AND Clock = '1' THEN
-            IF Rin = '1' THEN
+            IF Resetn = '0' THEN
+                Q <= (OTHERS => '0');
+            ELSIF E = '1' THEN
                 Q <= R;
             END IF;
         END IF;

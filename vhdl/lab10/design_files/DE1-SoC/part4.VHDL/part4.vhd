@@ -27,10 +27,10 @@ ARCHITECTURE Behavior OF part4 IS
                q       : OUT STD_LOGIC_VECTOR (15 DOWNTO 0));
     END COMPONENT;
     COMPONENT regn
-        GENERIC (n : INTEGER := 16);
-        PORT ( R          : IN  STD_LOGIC_VECTOR(n-1 DOWNTO 0);
-               Rin, Clock : IN  STD_LOGIC;
-               Q          : OUT STD_LOGIC_VECTOR(n-1 DOWNTO 0));
+        GENERIC ( n : INTEGER := 16);
+        PORT ( R                   : IN STD_LOGIC_VECTOR(n-1 DOWNTO 0);
+               Resetn, E, Clock    : IN STD_LOGIC;
+               Q                   : OUT STD_LOGIC_VECTOR(n-1 DOWNTO 0));
     END COMPONENT;
     COMPONENT flipflop 
         PORT ( D, Resetn, Clock : IN   STD_LOGIC;
@@ -77,14 +77,14 @@ BEGIN
     END PROCESS;
 
     W_LED <= LED_reg_cs AND W;
-    -- regn(R, Rin, Clock, Q);
+    -- regn(R, E, Clock, Q);
     U5: regn GENERIC MAP (n => 9) 
-             PORT MAP (DOUT(8 DOWNTO 0), W_LED, CLOCK_50, LED_reg);
+             PORT MAP (DOUT(8 DOWNTO 0), KEY(0), W_LED, CLOCK_50, LED_reg);
     LEDR(8 DOWNTO 0) <= LED_reg;
     LEDR(9) <= Run;
 
     U6: regn GENERIC MAP (n => 9) 
-             PORT MAP (SW(8 DOWNTO 0), High, CLOCK_50, SW_reg); -- SW(9) is used for Run
+             PORT MAP (SW(8 DOWNTO 0), KEY(0), High, CLOCK_50, SW_reg); -- SW(9) is used for Run
 
     W_seg7 <= seg7_cs AND W;
     U7: seg7 PORT MAP (DOUT(6 DOWNTO 0), ADDR(2 DOWNTO 0), W_seg7, KEY(0), CLOCK_50,

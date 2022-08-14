@@ -1,21 +1,51 @@
-\documentclass[epsfig,10pt,fullpage]{article} 
+\documentclass[epsfig,10pt,fullpage]{article} \addtolength{\textwidth}{1.5in}
+\addtolength{\oddsidemargin}{-0.75in}
+\addtolength{\topmargin}{-0.75in}
+\addtolength{\textheight}{1.5in}
+\addtolength{\evensidemargin}{0.75in}
+\raggedbottom
+\usepackage{ae,aecompl}
+\usepackage{epsfig,float,times}
+\usepackage{graphicx}
+\usepackage[usenames]{xcolor}
 
-\newcommand{\LabNum}{10}
-\newcommand{\CommonDocsPath}{../../../common/docs}
-\input{\CommonDocsPath/preamble.tex}
+\newcommand{\red}[1]{{\color{red}\sf{#1}}}
+\newcommand{\blue}[1]{{\color{blue}\sf{#1}}}
 
+\usepackage{placeins}
+\usepackage{listings}
+\definecolor{PineGreen}{rgb}{0.0, 0.47, 0.44}
+\definecolor{ForestGreen}{rgb}{0.13, 0.55, 0.13}
+\definecolor{Brown}{rgb}{0.59, 0.29, 0.0}
+
+\lstdefinelanguage{ASM}{
+  morekeywords = [1]{mv, mvt, add, sub, st, ld, and, b, bne, beq, bcc, bcs, bpl, bmi},
+  morekeywords = [2]{word, define},
+  keywordstyle = [1]\color{ForestGreen},
+  keywordstyle = [2]\color{blue},
+  sensitive = true,
+  morecomment = [l]{//},
+}
+\lstset{
+%language = C,
+%language = Verilog,
+language = ASM,
+basicstyle=\small\color{black}\ttfamily, commentstyle=\small\color{Brown}\itshape\ttfamily,
+showstringspaces=false,
+frame=none, %lines % boxed listings
+breaklines=true,
+breakatwhitespace=true,
+tabsize=3
+}
 \setcounter{table}{2}
 \setcounter{figure}{11}
 
 \begin{document}
-
-\centerline{\huge Digital Logic}
 ~\\
-\centerline{\huge Laboratory Exercise \LabNum}
+\centerline{\huge Laboratory Exercise 10}
 ~\\
 \centerline{\large An Enhanced Processor}
 ~\\
-
 In Laboratory Exercise 9 we described a simple processor. In
 Part I of that exercise the processor itself was designed, and in Part II the processor was
 connected to an external counter and a memory unit. This exercise describes subsequent
@@ -27,8 +57,9 @@ are continued from those in Parts I and II of the preceding lab exercise.
 In this exercise we will extend the capability of the processor so that the external counter 
 is no longer needed, and so that the processor can perform read and
 write operations using memory or other devices. 
-A schematic of the enhanced processor is given in Figure~\ref{fig:fig12}. In the figure
-registers $r0$ to $r6$ are the same as in Figure~1 of Lab~1, but register $r7$ has 
+A schematic of the enhanced processor is given in
+Figure~\ref{fig:fig12}. In this figure
+registers $r0$ to $r6$ are the same as in Figure~1 of Lab~9, but register $r7$ has 
 been changed to a counter. This counter is used to provide the addresses in the memory from 
 which the processor's instructions are read; in the preceding 
 lab exercise, a counter external to the processor was used for this purpose. 
@@ -41,13 +72,15 @@ incremented to point to the next instruction.
 
 ~\\
 \noindent
-The processor's control unit increments {\it pc} by using the {\it incr\_pc} signal, which is
+The processor's control unit increments {\it pc} by using the {\it pc\_incr} signal, which is
 just an enable on this counter. It is also possible to load an arbitrary address into 
 {\it pc} by having the processor execute an instruction in which the destination register is 
-specified as {\it pc}. In this case the control unit uses {\it r7}$_{in}$ to perform 
+specified as {\it pc}. In this case the control unit uses
+{\it pc}$_{in}$ to perform 
 a {\it load} of the counter. Thus, the processor can execute instructions at any address 
 in the memory, as opposed to only being able to execute instructions that are stored at 
-successive addresses. The current content of {\it pc}, which always has the address of 
+successive addresses. The current contents of {\it pc},
+which always has the address of 
 the {\it next} instruction to be executed, can be copied into another register if needed 
 by using a {\it mv} instruction. 
 
@@ -56,27 +89,29 @@ by using a {\it mv} instruction.
 The enhanced processor will have four new instructions, which are listed
 in Table~\ref{tab:new_instr}.  The {\it ld} (load) instruction {\it reads} data into 
 register {\it rX} from the external memory address specified in register {\it rY}. Thus, 
-the syntax [{\it rY}] means that the content of register {\it rY} is used as an
+the syntax [{\it rY}] means that the contents of register {\it rY} are used as an
 {\it external address}. The {\it st} (store) instruction {\it writes} the data contained 
 in register {\it rX} into the memory address found in {\it rY}. The {\it and} instruction 
-is similar to the {\it add} and {\it sub} instructions that were introduced in Lab 1.
+is similar to the {\it add} and {\it sub} instructions that were introduced in Lab 9.
 This instruction extends the adder/subtracter unit in the processor into an
 {\it arithmetic logic unit}. Besides performing addition and subtraction, it 
 has the ability to generate a bit-wise logical AND (\&) of the destination register
 {\it rX} with the second operand {\it Op2}. As discussed
-in Lab 1, the operand {\it Op2} can be either another register {\it rY}, or immediate
+in Lab 9, the operand {\it Op2} can be either another register {\it rY}, or immediate
 data {\it \#D}.
 
 ~\\
 \noindent
-The {\it b\{cond\}} instruction is used to cause a processor {\it branch}, which means to
+The {\it b\{cond\}} instruction in Table~\ref{tab:new_instr} is used 
+to cause a processor {\it branch}, which means to
 change the program counter ({\it pc}) to the address of a specific instruction. The {\it cond}
 part of the branch instruction is optional and represents a {\it condition}. The instruction 
-loads the constant \#{\it Label} into {\it pc} only if the specified condition evaluates to true.
+loads the address {\it Label} into {\it pc} only if the specified condition evaluates to true.
 An example of a condition is {\it eq}, which stands for {\it equal} (to zero). 
-The instruction \texttt{beq \#Label} will load the constant {\it Label} into {\it pc} if the
+The instruction \texttt{beq Label} will load the address {\it Label} into {\it pc} if the
 last result produced by the arithmetic logic unit, which is stored in register $G$, was 0. 
-The {\it b\{cond\}} instruction is discussed in more detail in Part V of this exercise.
+The 3-bit register $F$ shown in Figure~\ref{fig:fig12} is required for the {\it b\{cond\}} 
+instruction, which is discussed in more detail in Part V.
 
 \begin{table}[H]
 \begin{center}
@@ -85,7 +120,7 @@ The {\it b\{cond\}} instruction is discussed in more detail in Part V of this ex
 \rule[-0.075in]{0in}{0.25in}{\it ld}~~~{\it rX}, [{\it rY}] & {\it rX} $\leftarrow$ [{\it rY}] \\ 
 \rule[-0.075in]{0in}{0.25in}{\it st}~~~{\it rX}, [{\it rY}] & [{\it rY}] $\leftarrow$ {\it rX} \\ 
 \rule[-0.075in]{0in}{0.25in}{\it and}~~~{\it rX}, {\it Op2} & {\it rX} $\leftarrow$ {\it rX} \& {\it Op2} \\ 
-\rule[-0.075in]{0in}{0.25in}{\it b\{cond\}}~~~\#{\it Label} & if ({\it cond}), {\it pc} $\leftarrow$ \#{\it Label} \\ 
+\rule[-0.075in]{0in}{0.25in}{\it b\{cond\}}~~~{\it Label} & if ({\it cond}), {\it pc} $\leftarrow$ {\it Label} \\ 
 \end{tabular}
 \caption{New instructions in the enhanced processor.}
 \label{tab:new_instr}
@@ -94,7 +129,7 @@ The {\it b\{cond\}} instruction is discussed in more detail in Part V of this ex
 
 \begin{figure}[H]
 \begin{center}
-\includegraphics[scale = 0.8]{figures/figure12.pdf}
+\includegraphics[scale = 0.8]{figures/figure12_F.pdf}
 \end{center}
 \caption{An enhanced version of the processor.}
 \label{fig:fig12}
@@ -102,19 +137,20 @@ The {\it b\{cond\}} instruction is discussed in more detail in Part V of this ex
 
 ~\\
 \noindent
-Recall from Lab 1 that instructions are encoded using a 16-bit format. For instructions
+Recall from Lab 9 that instructions are encoded using a 16-bit format. For instructions
 that specify {\it Op2} as a register the encoding is \texttt{III0XXX000000YYY}, and if {\it Op2}
 is an immediate constant the format is \texttt{III1XXXDDDDDDDDD}. You should use these 
 same encodings for this exercise. Assume that \texttt{III} $= 100$ for the {\it ld} instruction,
-$101$ for {\it st}, $110$ for {\it and}, and $111$ for {\it b\{cond\}}.
+$101$ for {\it st}, and $110$ for {\it and}. The encoding for {\it b\{cond\}} is discussed 
+in Part V of this exercise.
 
 ~\\
 Figure~\ref{fig:fig12} shows two registers in the processor that are used for data transfers. The 
 {\it ADDR} register is used to send addresses to an external device, such as a memory module,
 and the {\it DOUT} register is used by the processor to provide data that is to be stored outside 
 of the processor. One use of the {\it ADDR} register is for reading, or {\it fetching}, 
-instructions from memory; when the processor wants to fetch an instruction, the content
-of {\it pc} is transferred across the bus and loaded into {\it ADDR}. This address is 
+instructions from memory; when the processor wants to fetch an instruction, the contents
+of {\it pc} are transferred across the bus and loaded into {\it ADDR}. This address is 
 provided to the memory.
 
 ~\\
@@ -122,7 +158,7 @@ In addition to fetching instructions, the processor can read data
 at any address by using the {\it ADDR} register. Both data and instructions are read into 
 the processor on the {\it DIN} input port.  The processor can write data for storage at 
 an external address by placing this address into the {\it ADDR} register, placing the data 
-to be stored into its {\it DOUT} register, and asserting the output of the {\it W} 
+to be stored into the {\it DOUT} register, and asserting the output of the {\it W} 
 ({\it Write}) flip-flop to 1. 
 
 \section*{Connecting the Processor to External Devices}
@@ -139,10 +175,12 @@ static random access memory (SSRAM).
 ~\\
 Figure~\ref{fig:fig13} also includes a 9-bit output port (register) that can be used to store 
 data from the processor. In the figure this output port is connected to a set of LEDs, like 
-the ones available on the DE1-SoC board. To allow the processor to select either the memory 
+those available on the DE1-SoC, and similar, FPGA boards. To allow the processor to select 
+either the memory 
 unit or output port when performing a write operation, the circuit includes {\it address decoding},
-which is done using NOR gates and AND gates. 
-If the processor's upper address lines $A_{15} A_{14} A_{13} A_{12} = 0000$, then the memory unit 
+which is done using NOR gates and AND gates. Let the processor's address lines be referred
+to as ADDR = $A_{15} A_{14} \cdots A_1 A_0$. 
+If the upper address lines $A_{15} A_{14} A_{13} A_{12} = 0000$, then the memory unit 
 can be written. Figure~\ref{fig:fig13} shows $n$ {\it lower} address lines connected from the 
 processor to the memory; since the memory has 256 words, then $n = 8$ and the memory's 
 {\it address} port is driven by the processor address lines $A_7 \ldots A_0$. For
@@ -171,7 +209,7 @@ is loaded into the output port connected to {\it LEDs} in Figure~\ref{fig:fig13}
 
 Figure~\ref{fig:top} gives Verilog code for a top-level file that you can use for this
 part of the exercise. The input and output ports for this module are chosen so that it can
-be implemented on a DE1-SoC board. The Verilog code corresponds to the circuit 
+be implemented on a DE1-SoC, or similar, board. The Verilog code corresponds to the circuit 
 in Figure~\ref{fig:fig13},
 plus an additional input port that is connected to switches {\it SW}$_8$ $\ldots$ {\it SW}$_0$.
 This input port can be read by the processor at addresses in which $A_{15} \ldots A_{12} = 0011$.
@@ -231,11 +269,11 @@ need to work on the {\it b\{cond\}} instruction for this part.
 	   else
 		   DIN = 16'bxxxxxxxxxxxxxxxx;
 
-	regn #(.n(9)) U5 (DOUT[8:0], LED_reg_cs & W, CLOCK_50, LED_reg);
+	regn #(.n(9)) U5 (DOUT[8:0], Resetn, LED_reg_cs & W, CLOCK_50, LED_reg);
 	assign LEDR[8:0] = LED_reg;
    assign LEDR[9] = SW[9];
 
-	regn #(.n(9)) U7 (SW[8:0], 1'b1, CLOCK_50, SW_reg); // SW[9] is used for Run
+	regn #(.n(9)) U7 (SW[8:0], Resetn, 1'b1, CLOCK_50, SW_reg); // Run = SW[9]
 endmodule
 \end{lstlisting}
 \end{minipage}
@@ -248,31 +286,101 @@ endmodule
 \noindent
 Perform the following:
 \begin{enumerate}
-\item Extend the code in {\it proc.v} so that the enhanced processor fully implements the 
-{\it ld}, {\it st}, and {\it and} instructions. Test your Verilog code by using the ModelSim
-simulator. Sample setup files for ModelSim, including a testbench, are provided along with 
-the other files for this exercise.  The sample testbench first resets the processor system
+\item Augment the code provided in {\it proc.v} so that the enhanced processor reads each
+of its instructions from the external memory, using the program counter to provide the
+memory address. Also, implement the {\it ld}, {\it st}, and {\it and} instructions. The
+control FSM requires six time steps for the enhanced processor, as indicated in 
+Table~\ref{tab:control_signals}.  The first three steps are needed to {\it fetch} 
+an instruction into the processor from memory. In step $T_0$ 
+the program counter is copied into the {\it ADDR} register, so that this
+address will be provided to the memory. This action is accomplished by placing the program
+counter onto the {\it Buswires}, and asserting {\it ADDR}$_{in}$. Also, 
+{\it pc\_incr} is asserted so that the program counter will be incremented
+to the address in memory of the next instruction. Since the memory has a synchronous
+interface, as shown in Figure~\ref{fig:fig14}, the processor must use time-step $T_1$ to 
+wait for the memory to respond. Then, the {\it IR$_{in}$} signal can be asserted in step
+$T_2$, so that in step $T_3$ the {\it IR} register will hold the machine code of the
+instruction to be executed. 
+
+We can compare the time steps in the enhanced processor to those of the simple processor from
+Laboratory Exercise~9. In the enhanced processor, step $T_2$ serves the same function as 
+step $T_0$ in the simple processor. Thus, in Table~\ref{tab:control_signals} the control signals
+asserted in steps $T_2$ to $T_5$ for the {\it mv}, {\it mvt}, {\it add}, and {\it sub} 
+instructions are the same as those used in time steps $T_0$ to $T_3$ for the simple processor. 
+The {\it and} instruction uses the same control signals as for {\it add} and {\it sub},
+with one difference---for {\it and}, the control signal {\it ALU\_and} is asserted in 
+step $T_4$, which causes the ALU to perform the logical AND operation.
+
+The last two lines in Table~\ref{tab:control_signals} show the timing needed for {\it ld}
+and {\it st}. In both instructions the contents of register {\it rY} is
+transferred in step $T_3$ to the {\it ADDR} register. For {\it ld} the processor uses 
+$T_4$ to wait for the memory to respond with data, and then step
+$T_5$ causes this data to
+be loaded into register {\it rX}. For {\it st}, the data in
+{\it rX} to be written to the
+memory is transferred to register {\it DOUT} in step $T_4$, and {\it W\_D} (see 
+Figure~\ref{fig:fig12}) is asserted to set the {\it W} ({\it write}) signal for the memory.  
+
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{r|c|c|c|c|c|c|}
+\multicolumn{1}{c}{~} & \multicolumn{1}{c}{$T_0$} & \multicolumn{1}{c}{$T_1$} & \multicolumn{1}{c}{$T_2$} & \multicolumn{1}{c}{$T_3$} & \multicolumn{1}{c}{$T_4$} & \multicolumn{1}{c}{$T_5$} \rule[-0.075in]{0in}{0.25in}\\ \cline{2-7}
+{\it mv~} & {\it Select} {\it pc}, & ~ & {\it IR}$_{in}$ & \rule[-0.075in]{0in}{0.25in}{\it Select} {\it rY} or {\it IR}, &  &  \\
+~ & {\it ADDR}$_{in}$, {\it pc\_incr} & ~ & ~ & {\it rX$_{in}$}, {\it Done} &  &  \\ \cline{2-7}
+{\it mvt~} & {\it Select} {\it pc}, & ~ & {\it IR}$_{in}$ & \rule[-0.075in]{0in}{0.25in}{\it Select} {\it IR}, &  &  \\
+~ & {\it ADDR}$_{in}$, {\it pc\_incr} & ~ & ~ & {\it rX$_{in}$}, {\it Done} &  &  \\ \cline{2-7}
+\rule[-0.075in]{0in}{0.25in}{\it add~} & {\it Select} {\it
+pc}, & ~ & {\it IR}$_{in}$ & {\it Select} {\it rX}, & {\it Select} {\it rY} or {\it IR}, & {\it Select G}, {\it rX$_{in}$}, \\
+~ & {\it ADDR}$_{in}$, {\it pc\_incr} & ~ & ~ & {\it A$_{in}$} &  {\it G$_{in}$} & {\it Done} \\
+\cline{2-7}
+\rule[-0.075in]{0in}{0.25in}{\it sub~} & {\it Select} {\it
+pc}, & ~ & {\it IR}$_{in}$ & {\it Select} {\it rX}, & {\it Select} {\it rY} or {\it IR}, & {\it Select G}, {\it rX$_{in}$}, \\
+~ & {\it ADDR}$_{in}$, {\it pc\_incr} & ~ & ~ & {\it A$_{in}$} &  {\it AddSub}, {\it G$_{in}$} & {\it Done} \\
+\cline{2-7}
+\rule[-0.075in]{0in}{0.25in}{\it and~} & {\it Select} {\it
+pc}, & ~ & {\it IR}$_{in}$ & {\it Select} {\it rX}, & {\it Select} {\it rY} or {\it IR}, & {\it Select G}, {\it rX$_{in}$}, \\
+~ & {\it ADDR}$_{in}$, {\it pc\_incr} & ~ & ~ & {\it A$_{in}$} &  {\it ALU\_and}, {\it G$_{in}$} & {\it Done} \\
+\cline{2-7}
+\rule[-0.075in]{0in}{0.25in}{\it ld~} & {\it Select} {\it
+pc}, & ~ & {\it IR}$_{in}$ & {\it
+Select} {\it rY}, &  & {\it Select DIN}, {\it rX$_{in}$}, \\
+~ & {\it ADDR}$_{in}$, {\it pc\_incr} & ~ & ~ & {\it ADDR}$_{in}$ &  & {\it Done} \\
+\cline{2-7}
+\rule[-0.075in]{0in}{0.25in}{\it st~} & {\it Select} {\it
+pc}, & ~ & {\it IR}$_{in}$ & {\it
+Select} {\it rY}, & {\it Select rX}, {\it DOUT$_{in}$}, & \\
+~ & {\it ADDR}$_{in}$, {\it pc\_incr} & ~ & ~ & {\it ADDR$_{in}$} & $W_D$, {\it Done} & \\
+\cline{2-7}
+\end{tabular}
+\caption{Control signals asserted in each instruction/time step.}
+\label{tab:control_signals}
+\end{center}
+\end{table}
+
+Test your Verilog code by using the Questa or ModelSim
+Simulator. Sample setup files for the Simulator, including a testbench, are provided along with 
+the other design files for this exercise.  The sample testbench first resets the processor system
 and then asserts the {\it Run} switch, {\it SW}$_9$, to 1. A sample program to test your 
 processor is also provided, in a file called {\it inst\_mem.mif}. This file represents the 
 assembly-language program shown in Figure~\ref{fig:assembly}, which tests 
 the {\it ld} and {\it st} instructions by reading the values of the SW switches and writing 
-these values to the LEDs, in an endless loop. At the beginning of a simulation, ModelSim loads 
-the contents of the file {\it inst\_mem.mif} into the {\it inst\_mem} memory module, so
+these values to the LEDs, in an endless loop. At the beginning of a simulation, the Simulator 
+loads the contents of the file {\it inst\_mem.mif} into the {\it inst\_mem} memory module, so
 that the program can be executed by the processor.  Examine the signals inside 
 your processor, as well as the external LEDR values, as the program executes within the
-ModelSim simulation.
+simulation.
 
-An {\it assembler} software tool, called {\it sbasm.py}, can be used with your processor.
-The Assembler is written in Python and is available at
-\texttt{https://github.com/profbrown/sbasm.git}. To use this 
-Assembler you have to first install Python (version 3) on your computer. The Assembler includes
+An {\it Assembler} software tool, called {\it sbasm.py}, is provided for use with your processor.
+The Assembler is written in Python and is included along with the design files for this exercise.
+To use this Python script you need to have Python (version 3) installed on your computer. 
+The Assembler includes
 a README file that explains how to install and use it. The {\it sbasm.py} Assembler can 
 generate machine code for all of the processor's instructions. The provided file 
 {\it inst\_mem.mif} was created by using {\it sbasm.py} to {\it assemble} the program in 
 Figure~\ref{fig:assembly}. As the figure indicates, you can define symbolic
 constants in your code by using the .\blue{define} {\it directive}, and you can use 
 labels to refers to lines of code, such as \texttt{MAIN}.
-Comments are specified in the code by using \texttt{//}. The assembler ignores anything 
+Comments are specified in the code by using \texttt{//}. The Assembler ignores anything 
 on a line following \texttt{//}.
 
 \lstset{language=ASM,numbers=none,escapechar=|}
@@ -280,8 +388,8 @@ on a line following \texttt{//}.
 \begin{center}
 \begin{minipage}[h]{12.5 cm}
 \begin{lstlisting}[name=proc]
-|\label{line:module}|.define LED_ADDRESS 0x1000
-.define SW_ADDRESS 0x3000
+|\label{line:module}|.define LED_ADDRESS 0x10
+.define SW_ADDRESS 0x30
 
 // Read SW switches and display on LEDs
 			mvt	r3, #LED_ADDRESS	// point to LED port
@@ -296,15 +404,35 @@ MAIN:		ld		r0, [r4]				// read SW values
 \end{center}
 \end{figure}
 
-An example result produced by using {\it ModelSim} for a correctly-designed circuit 
+An example simulation result for a correctly-designed circuit 
 is given in Figure~\ref{fig:part3}. It shows the execution of the first four instructions
 in Figure~\ref{fig:assembly}.
 
-\item Once your simulation results are correct, use the Quartus Prime software to implement your
-Verilog code on a DE1-SoC board. A sample Quartus project file, {\it part3.qpf}, and Quartus
-settings file, {\it part3.qsf}, are provided with the exercise. Compile your code using the 
-Quartus software, and download the resulting circuit 
-into the DE1-SoC board. Toggle the SW switches and observe the LEDs to test your circuit.
+\item Once your simulation results look correct, you can then implement your Verilog
+code on an FPGA board, such as the DE1-SoC. However, as we mentioned in Lab Exercise~9, as
+an interim step you may wish to first simulate your processor by using the graphical user
+interface (GUI) provided by the DESim tool---it gives a convenient way of observing the behaviour 
+of programs running on your processor that use the lights, switches, and other features of 
+the board. You are encouraged to make use of DESim, as it
+is a convenient way of debugging issues, especially when you do not have access to a 
+physical board.
+
+The setup files that are needed to use DESim for this part of the exercise are provided along
+with its design files.  When using DESim, the memory module in your design will be initialized with
+the contents of the {\it inst\_mem.mif} file, so that the program in the memory 
+can be executed by your processor. Once you start the simulation within the DESim GUI make sure to 
+reset the circuit by clicking on the \texttt{Push Button} that corresponds to
+\texttt{KEY}$_0$, and assert the {\it Run} signal to 1 by setting the \texttt{Switch}
+that corresponds to \texttt{SW}$_9$. Toggle the values of the \texttt{Switches}
+\texttt{SW}$_{8-0}$ in the DESim GUI and observe the \texttt{LEDs}. 
+
+\item
+To implement your Verilog code using an actual (as opposed to {\it simulated}, with DESim) 
+DE1-SoC board, you have to use the Quartus Prime software.
+A sample Quartus project file, {\it part3.qpf}, and Quartus
+settings file, {\it part3.qsf}, are provided with the exercise. After compiling your code 
+with the Quartus software, download the resulting circuit 
+to the board. Toggle the SW switches and observe the LEDs to test your circuit.
 \end{enumerate}
 
 \begin{figure}[H]
@@ -317,8 +445,9 @@ into the DE1-SoC board. Toggle the SW switches and observe the LEDs to test your
 
 \section*{Part IV}
 In this part you are to create a new Verilog module that represents an output port called 
-{\it seg7}. It will allow your processor to write data to each of the six 7-segment displays on a 
-DE1-SoC board. The {\it seg7} module will include six write-only seven-bit registers,
+{\it seg7}. It will allow your processor to write data to each of the six 7-segment
+displays that are available on a DE1-SoC, or similar, board. The {\it seg7} module will 
+include six write-only seven-bit registers,
 one for each display. Each register should directly drive the segment lights for one 
 seven-segment display, so that the processor can write characters onto the displays. 
 
@@ -330,8 +459,6 @@ Perform the following:
 \item A top-level file is provided for this part
 called {\it part4.v}. The top-level module has output ports for connecting
 to each of the 7-segment displays. 
-Pin assignments for these ports, which are called {\it HEX0}[6:0], {\it HEX1}[6:0], 
-$\ldots$, {\it HEX6}[6:0], are included in the Quartus settings file {\it part4.qsf}. 
 For each display, segment 0 is on the top of the display, and then segments 1 to 5 are assigned
 in a clockwise fashion, with segment 6 being in the middle of the display.
 
@@ -348,7 +475,7 @@ should turn on all of the lights in this display.
 You are to complete the partially-written Verilog code in the file {\it seg7.v}, so that
 it contains the required six registers---one for each 7-segment display. 
         
-\item You can compile and test your Verilog code by using the ModelSim setup files that 
+\item You can compile and test your Verilog code by using the Simulator setup files that 
 are provided for this part of the exercise. An {\it inst\_mem.mif} file is also provided
 that corresponds to the assembly-language program shown in 
 Figure~\ref{fig:7segs}. This program works as follows: it reads the {\it SW} switch port and 
@@ -358,8 +485,15 @@ If {\it SW}$_{2-0} = 001$, then the digit~\texttt{\red{1}} is displayed on {\it 
 and so on, up to the digit~\texttt{\red{5}} which would be shown on {\it HEX5} if
 {\it SW}$_{2-0} = 101$.
 
-\item Once your simulation results look correct, you should compile the provided Quartus
-project, and then download and test the circuit on a DE1-SoC board.
+\item Once your simulation results look correct, you can then implement your Verilog
+code on an FPGA board. As we discussed in Part III, above, you are encouraged 
+to make use of the DESim tool for testing your processor and
+programs (project set-up files for DESim are included with this exercise). 
+When using your processor, remember to reset the circuit and set {\it Run} $= 1$, and then 
+toggle the values of the \texttt{Switches} and 
+observe the \texttt{Seven-segment Displays}. When compiling your Verilog code with
+Quartus Prime, you may wish to make use of the sample Quartus project file, {\it part4.qpf}, 
+and Quartus settings file, {\it part4.qsf}, that are included along with this exercise.
 \end{enumerate}
 
 \lstset{language=ASM,numbers=none,escapechar=|}
@@ -368,55 +502,31 @@ project, and then download and test the circuit on a DE1-SoC board.
 \begin{minipage}[h]{15 cm}
 \begin{lstlisting}[name=proc]
 |\label{line:module}|
-.define HEX_ADDRESS 0x2000
-.define SW_ADDRESS 0x3000
+.define HEX_ADDRESS 0x20
+.define SW_ADDRESS 0x30
 
 // This program shows the digits 543210 on the HEX displays. Each digit has to
 // be selected by using the SW switches.
-			mv		r5, pc				// return address for subroutine
-			mv 	pc, #BLANK			// call subroutine to blank the HEX displays
-MAIN:		mvt	r2, #HEX_ADDRESS	// point to HEX port
-			mv 	r3, #DATA			// used to get 7-segment display pattern
+MAIN:   mvt    r2, #HEX_ADDRESS     // point to HEX port
+        mv     r3, #DATA            // used to get 7-segment display pattern
 
-			mvt	r4, #SW_ADDRESS	// point to SW port
-			ld		r0, [r4]				// read switches
-			and   r0, #0x7          // use only SW2-0
-			add	r2, r0				// point to correct HEX display
-			add	r3, r0				// point to correct 7-segment pattern
+        mvt    r4, #SW_ADDRESS      // point to SW port
+        ld     r0, [r4]             // read switches
+        and    r0, #0x7             // use only SW2-0
+        add    r2, r0               // point to correct HEX display
+        add    r3, r0               // point to correct 7-segment pattern
 
-			ld		r0, [r3]				// load the 7-segment pattern
-			st		r0, [r2]				// light up HEX display
+        ld     r0, [r3]             // load the 7-segment pattern
+        st     r0, [r2]             // light up HEX display
 
-			mv 	pc, #MAIN
+        mv     pc, #MAIN
 
-// subroutine BLANK
-// 	This subroutine clears all of the HEX displays
-//	input: none
-//	returns: nothing
-// changes: r0 and r1. Register r5 provides the return address
-BLANK:   mv 	r0, #0				// used for clearing
-			mvt	r1, #HEX_ADDRESS	// point to HEX displays
-			st		r0, [r1]				// clear HEX0
-			add	r1, #1
-			st		r0, [r1]				// clear HEX1
-			add	r1, #1
-			st		r0, [r1]				// clear HEX2
-			add	r1, #1
-			st		r0, [r1]				// clear HEX3
-			add	r1, #1
-			st		r0, [r1]				// clear HEX4
-			add	r1, #1
-			st		r0, [r1]				// clear HEX5
-
-			add	r5, #1
-			mv		pc, r5				// return from subroutine
-
-DATA:		.word 0b00111111			// '0'
-			.word 0b00000110			// '1'
-			.word 0b01011011			// '2'
-			.word 0b01001111			// '3'
-			.word 0b01100110			// '4'
-			.word 0b01101101			// '5'
+DATA:   .word  0b00111111           // '0'
+        .word  0b00000110           // '1'
+        .word  0b01011011           // '2'
+        .word  0b01001111           // '3'
+        .word  0b01100110           // '4'
+        .word  0b01101101           // '5'
 \end{lstlisting}
 \end{minipage}
 \caption{Assembly-language program that tests the seven-segment displays.}
@@ -427,39 +537,62 @@ DATA:		.word 0b00111111			// '0'
 \section*{Part V}
 In this part you are to enhance your processor so that it implements the {\it b\{cond\}}
 instruction.  The {\it conditions} supported by the processor are called 
-{\it eq}, {\it ne}, {\it cc}, and {\it cs}, which means that the variations of the branch
-instruction are {\it b}, {\it beq}, {\it bne}, {\it bcc}, and {\it bcs}. The {\it b}
-instruction {\it always} branches. For example, \texttt{b \#MAIN} loads the address
-\texttt{MAIN} into the program counter. The meanings of the conditional versions are 
+{\it eq}, {\it ne}, {\it cc}, {\it cs}, {\it pl}, and {\it mi}, which means that the variations 
+of the branch instruction are {\it b}, {\it beq}, {\it bne}, {\it bcc}, and so on. The {\it b}
+instruction {\it always} branches. For example, \texttt{b  MAIN} loads the address of the
+label \texttt{MAIN} into the program counter. The meanings of the conditional versions are 
 explained below.
 
 ~\\
 \noindent
-The instruction {\it beq} means {\it branch if equal} (to zero). This instruction performs
-a branch operation (i.e., loads the provided \texttt{\#LABEL} into the program counter) if the 
-most recent result of an instruction executed using the
-arithmetic logic unit (ALU), which is stored in register $G$, was~0. 
+The instruction \texttt{beq  LABEL} means {\it branch if equal} (to zero). It performs a branch 
+(sets {\it pc} $=$ \texttt{LABEL}) if the most recent result of an instruction 
+executed using the arithmetic logic unit (ALU), which is stored in register $G$, was~0. 
 Similarly, {\it bne} means {\it branch if not
 equal} (to zero).  It performs a branch only if the contents of $G$ are not equal to 0.
 The instruction {\it bcc} stands for {\it branch if carry clear}. It branches if the last
 add/subtract operation did {\it not} produce a carry-out. The opposite branch condition, 
-{\it bcs}, {\it branch if carry set}, performs a branch if the most recent add/sub
-generated a carry-out. To support the conditional branch instructions, you should 
-create two {\it condition-code flags} in your processor. One flag, {\it z}, should have
-the value 1 when the ALU generates a result of zero; otherwise {\it z} should be 0. The other 
-flag, {\it c}, should be 1 when the adder/subtracter in the ALU produces a carry-out;
-otherwise {\it c} should be 0. Thus, {\it c} should be 1 when an {\it add} 
-instruction generates a carry-out,
-or when a {\it sub} operation requires a borrow for the most-significant bit. Your FSM
-controller should examine these flags in the appropriate clock cycles when executing the 
-{\it b\{cond\}} instructions.
+{\it bcs}, {\it branch if carry set}, branches if the most recent add/sub generated a 
+carry-out. The conditions {\it bpl} and {\it bmi} allow a branch to be taken when the value 
+in register {\it G} is a positive or negative (2's complement) value,
+respectively. 
 
 ~\\
 \noindent
-The branch instructions are encoded using the format \texttt{III1XXXDDDDDDDDD}, where
-\texttt{DDDDDDDDD} is the branch address and \texttt{XXX} is the branch condition. Assume
-that conditions are encoded as {\it none} (always branch) $= 000$, {\it eq}~$= 001$,
-{\it ne} $= 010$, {\it cc} $= 011$, and {\it cs} $= 100$.
+To support the conditional branch instructions, you should create three
+{\it condition-code flags}, called {\it z}, {\it n}, and {\it c} in your processor. 
+The {\it z} flag should have the value 1 when the ALU generates a result of zero; 
+otherwise {\it z} should be~0.  The {\it n} flag should be 1 when the ALU generates a 
+result that is negative, meaning that the most-significant bit (the {\it sign} bit) of the
+result is 1; 
+otherwise {\it n} should be set to~0. Finally, the {\it c} flag should reflect the carry-out 
+from the ALU; this flag should be 1 when an {\it add} instruction generates a carry-out, or 
+when a {\it sub} operation does {\it not} generate a borrow. Figure~\ref{fig:fig12} 
+indicates how you can implement the flags as the outputs of a three-bit
+register, named $F$. The $z$ flag is controlled by a NOR gate that is 
+used to check when the output of the ALU 
+is zero, the $n$ flag is connected to the sign-bit from the ALU's output, and a carry-out 
+from the ALU drives the $c$ flag. These flags are connected to the FSM controller, which 
+should examine the flags in the appropriate clock cycles when executing a {\it b\{cond\}}
+instruction.
+
+~\\
+\noindent
+The branch instructions are encoded similarly to the {\it mvt} instruction introduced
+in Lab Exercise~9, which has the format \texttt{III1XXXDDDDDDDDD}, with \texttt{III} $= 001$.
+The format of {\it b\{cond\}} is \texttt{III0XXXDDDDDDDDD}, where \texttt{III}~$= 001$,
+\texttt{XXX} gives the condition, and \texttt{DDDDDDDDD} specifies an {\it offset}.
+The condition \texttt{XXX} is encoded
+as {\it none} (always branch) $= 000$, {\it eq}~$= 001$, {\it ne} $= 010$, {\it cc} $= 011$, 
+{\it cs} $= 100$, {\it pl} $= 101$, and {\it mi} $= 110$.
+
+~\\
+\noindent
+The {\it offset} \texttt{DDDDDDDDD} is the 2's-complement value
+needed to reach the target \texttt{LABEL} relative to the current contents of the {\it pc}
+register.  This offset assumes that the {\it pc} has already been incremented after fetching the 
+{\it b\{cond\}} instruction from memory. For example, the instruction \texttt{HERE: b HERE} 
+would be encoded as \texttt{0010000111111111}, where the offset is the 2's-complement value -1.
 
 ~\\
 \noindent
@@ -467,43 +600,107 @@ Perform the following:
 
 \begin{enumerate}
 \item 
-Enhance your processor so that it implements the condition-code flags {\it z} and {\it c},
-and supports the {\it b\{cond\}} instruction. 
-To help with testing and debugging of your processor, setup files for ModelSim are provided, 
-including a testbench. It simulates your processor instantiated in the top-level file
+Enhance your processor so that it implements the condition-code flags {\it z}, {\it c}, and
+{\it n} and supports the {\it b\{cond\}} instruction. Table~\ref{tab:control_b} indicates the 
+control signal timing that can be used for this instruction. Step $T_3$ copies the
+contents of the {\it pc} into register $A$, in the ALU. This step also checks whether or 
+not the branch should be {\it taken}, based upon the {\it condition}. If the 
+{\it condition} is not true, indicated in Table~\ref{tab:control_b} using the syntax 
+(!{\it cond}), then the {\it Done} signal is asserted to abort the branch instruction. But if
+the {\it condition} is satisfied, then the finite state machine will continue to step $T_4$.
+This step places the branch offset, which is in the instruction register ({\it IR}), 
+onto the {\it Buswires} so that the ALU can add it to the value of the {\it pc} that was
+previously copied into register $A$. Finally, step $T_5$ transfers the computed branch-target 
+address to the {\it pc}, so that the branch will be taken. 
+
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{r|c|c|c|c|c|c|}
+\multicolumn{1}{c}{~} & \multicolumn{1}{c}{$T_0$} & \multicolumn{1}{c}{$T_1$} & \multicolumn{1}{c}{$T_2$} & \multicolumn{1}{c}{$T_3$} & \multicolumn{1}{c}{$T_4$} & \multicolumn{1}{c}{$T_5$} \rule[-0.075in]{0in}{0.25in}\\ \cline{2-7}
+{\it b\{cond\}~} & {\it Select} {\it pc}, & ~ & {\it IR}$_{in}$ &
+\rule[-0.075in]{0in}{0.25in}{\it Select} {\it pc}, {\it A}$_{in}$, & {\it Select} {\it
+IR},
+& {\it Select} {\it G}, {\it pc}$_{in}$, \\
+~ & {\it ADDR}$_{in}$, {\it pc\_incr} & ~ & ~ & if (!{\it cond}) {\it Done} & {\it G}$_{in}$ & {\it Done} \\ \cline{2-7}
+\cline{2-7}
+\end{tabular}
+\caption{Control signals asserted for {\it b\{cond\}} in each time step.}
+\label{tab:control_b}
+\end{center}
+\end{table}
+
+To help with testing and debugging of your processor, setup files for a Simulator are
+provided, including a testbench. It simulates your processor instantiated in the top-level file
 {\it part5.v}, which is the same as the one from Part IV. 
 An example {\it inst\_mem.mif} file is also provided, which corresponds 
 to the program in Figure~\ref{fig:branches}. This program is quite short, 
-which makes it suitable for visual inspection of the waveforms produced by a ModelSim simulation. 
-The program uses a sequence of instructions that test the various conditional branches. 
+which makes it suitable for visual inspection of the waveforms produced by a Simulator. 
+The program uses a sequence of instructions that tests the various conditional branches. 
 If the program reaches the line of code labelled \texttt{DEAD}, then at least one 
-instruction has not worked properly. An example of ModelSim output for a correctly-working
-processor is given in Figure~\ref{fig:part4}. It shows the processor executing instructions
-near the end of the code in Figure~\ref{fig:branches}. The instruction that is completed
-at simulation time 1030 ns is \texttt{add r0, \#1} (\texttt{0x5001}). As shown in the figure,
-this instruction causes the carry flag, {\it c}, to become 1. The next instruction loaded
-into {\it IR}, at time 1090 ns, is \texttt{bcs \#0xC} (\texttt{0xF80C}). Finally, the
-instruction loaded at 1170~ns is \texttt{b~\#0} (\texttt{0xF000}). 
+instruction has not worked properly. 
+
+An example of simulation output for a correctly-working
+processor is given in Figure~\ref{fig:part5}. It shows the processor executing instructions
+near the start of the code in Figure~\ref{fig:branches}. The instruction that is completed
+at simulation time 510 ns is \texttt{sub r0, \#1} (\texttt{0x7001}). As shown in the figure,
+this instruction causes the zero flag, {\it z}, to become 1. The next instruction loaded
+into {\it IR}, at time 570 ns, is \texttt{bne 0x1} (\texttt{0x25fe}). This instruction
+does not take the branch, because $z = 1$. Finally, the instruction loaded at 650~ns is 
+\texttt{beq~0x5} (\texttt{0x2201}), which does take the branch. 
+
+\item Once your simulation indicates a correctly-functioning processor,
+you can implement it on a DE1-SoC, or similar, board. As discussed above in Parts~III and~IV
+you can use the DESim tool as a convenient way of testing and debugging your design 
+using a simulation of a board, and you can use Quartus Prime to compile and download your 
+circuit to a physical board.  The required project set-up files for both DESim and Quartus are
+included along with this exercise.  To test your processor, 
+you can use the assembly-language program displayed in Figure~\ref{fig:sitbooboosit}. It 
+provides code that tests for the correct operation of instructions supported by the 
+enhanced processor.  If all of the tests pass, then
+the program shows the word \texttt{\red{PASSEd}} on the
+\texttt{Seven-segment Displays}. It also shows 
+a binary value on the LEDs that represents the number of successful tests performed. If any test
+fails, then the program shows the word \texttt{\red{FAILEd}} on the
+\texttt{Seven-segment Displays} and 
+places on the \texttt{LEDs} the address in the memory of the instruction that caused the failure.
+Assemble the program, which is provided in a file called {\it sitbooboosit.s}, by using 
+the {\it sbasm.py} assembler. Store the output produced by {\it sbasm.py} in the file
+{\it inst\_mem.mif}.
+
+If you compile your processor system using the DESim tool, it uses the current 
+contents of the {\it inst\_mem.mif} file to initialize the memory. When simulating your 
+processor make sure to reset it by clicking on the \texttt{Push Button} that corresponds to
+\texttt{KEY}$_0$. Then, set the {\it Run} signal to 1 by setting the \texttt{Switch}
+that corresponds to \texttt{SW}$_9$. If the {\it sitbooboosit} program displays
+\texttt{\red{FAILEd}} on the
+\texttt{Seven-segment Displays}, then you can identify the
+offending instruction by cross-referencing the LED pattern with the corresponding address
+in the file {\it inst\_mem.mif}.
 
 \lstset{language=ASM,numbers=none,escapechar=|}
 \begin{figure}[H]
 \begin{center}
 \begin{minipage}[h]{13.5 cm}
 \begin{lstlisting}[name=proc]
-MAIN:    mv    r0, #2
-LOOP: 	sub   r0, #1        // subtract to test bne
-			bne   #LOOP
-			beq   #T1           // r0 == 0, test beq
-			mv    pc, #DEAD
-T1:      mvt   r0, #0xFF00
-         add   r0, #0xFF     // r0 = 0xFFFF
-			bcc   #T2           // carry = 0, test bcc
-			mv    pc, #DEAD
-T2:      add   r0, #1
-			bcs   #T3           // carry = 1, test bcs
-			mv    pc, #DEAD
-T3:	   b     #MAIN
-DEAD:    mv    pc, #DEAD
+MAIN:  mv    r0, #2
+LOOP:  sub   r0, #1        // subtract to test bne
+       bne   LOOP
+       beq   T1            // r0 == 0, test beq
+       mv    pc, #DEAD
+T1:    mvt   r0, #0xFF
+       add   r0, #0xFF     // r0 = 0xFFFF
+       bcc   T2            // carry = 0, test bcc
+       mv    pc, #DEAD
+T2:    add   r0, #1
+       bcs   T3            // carry = 1, test bcs
+       mv    pc, #DEAD
+T3:    bpl   T4
+       mv    pc, #DEAD
+T4:    add   r0, #-1
+       bmi   T5
+       mv    pc, #DEAD
+T5:    b     MAIN
+DEAD:  mv    pc, #DEAD
 \end{lstlisting}
 \end{minipage}
 \caption{Assembly-language program that uses various branches.}
@@ -516,48 +713,67 @@ DEAD:    mv    pc, #DEAD
 		\includegraphics[width=\textwidth]{figures/part5.png}
 	\end{center}
 	\caption{Simulation results for the processor.}
-	\label{fig:part4}
+	\label{fig:part5}
 \end{figure}
 
-\item Once your ModelSim simulation indicates a correctly-functioning processor you should
-implement it on a DE1-SoC board.  A Quartus project file {\it part5.qpf} and settings file
-{\it part5.qsf} are provided for this purpose. To test your processor, you can use the 
-assembly-language program displayed in Figure~\ref{fig:sitbooboosit}. It provides code that
-tests for the correct operation of instructions supported by the enhanced processor. 
-If all of the tests pass, then
-the program shows the word \texttt{\red{PASSEd}} on the seven-segment displays. It also shows 
-a binary value on the LEDs that represents the number of successful tests performed. If any test
-fails, then the program shows the word \texttt{\red{FAILEd}} on the seven-segment displays and 
-places on the LEDs the address in the memory of the instruction that caused the failure.
-Assemble the program, which is provided in a file called {\it sitbooboosit.s}, by using 
-the {\it sbasm.py} assembler.
-        
-Use the output produced by {\it sbasm.py} to {\it overwrite} the file {\it inst\_mem.mif}
-that you used in the beginning of this part of the exercise to simulate your processor
-system with ModelSim. Open the Quartus software, compile the {\it part5} project, 
-and download it onto 
-your DE1-SoC board.  If the {\it Run} signal is asserted, then your processor should execute the 
-{\it sitbooboosit} program. If a failure is encountered, then the 
-offending instruction can be identified by cross-referencing the LED pattern with the addresses
-in the file {\it inst\_mem.mif}.
-\end{enumerate}
-
-\vspace{-0.5cm}
-\lstset{language=ASM,numbers=none,escapechar=|}
 \begin{figure}[H]
 \begin{center}
 \begin{minipage}[h]{14 cm}
 \begin{lstlisting}[name=proc]
-.define LED_ADDRESS 0x1000
-.define HEX_ADDRESS 0x2000
-			mv 	r2, #0		// used to count number of successful tests
-			mv 	r6, #T1		// save address of next test
-			sub	r0, r0		// set the z flag
-T1:		bne	#FAIL    	// test bne; should not take the branch!
-			mv 	r6, #C1		// save address of next test
-C1:      beq   #C2         // test beq; should take the branch
-    		b	   #FAIL    	// Argh!
-C2:		add	r2, #2		// count the last two successful tests
+.define LED_ADDRESS 0x10
+.define HEX_ADDRESS 0x20
+
+// shows on HEX displays either PASSEd or FAILEd
+             mv     r2, #0      // counts each successful test
+             mv     r6, #T1     // save address of next test
+             sub    r0, r0      // set the z flag
+// test bne and beq
+T1:          bne    FAIL        // should not take the branch!
+             mv     r6, #C1     // save address of next test
+C1:          beq    C2          // should take the branch
+             mv     pc, #FAIL   // Argh!
+
+C2:          add    r2, #2      // count the last two successful tests
+             mv     r6, #T2     // save address of next test
+// test bne and beq
+T2:          bne    S1          // should take the branch!
+             mv     pc, #FAIL
+S1:          mv     r6, #C3     // save address of next test
+C3:          beq    FAIL        // should not take the branch
+             add    r2, #2      // count the last two successful tests
+             mv     r6, #T3     // save address of next test
+             mv     r3, #-1     // r3 = 0xFFFF
+             add    r3, #1      // set the c flag
+// test bcc and bcs
+T3:          bcc    FAIL        // should not take the branch!
+             mv     r6, #C4     // save address of next test
+C4:          bcs    C5          // should take the branch
+             mv     pc, #FAIL   // Argh!
+C5:          add    r2, #2      // count the last two successful tests
+             mv     r6, #T4
+             mv     r3, #0
+             add    r3, r3      // clear carry flag
+// test bcc and bcs
+T4:          bcc    S2          // should take the branch!
+             mv     pc, #FAIL
+S2:          mv     r6, #C6     // save address of next test
+C6:          bcs    FAIL        // should not take the branch!
+             add    r2, #2      // count the last two successes
+             mv     r6, #T5     // save address of next test
+             mv     r3, #0
+             add    r3, #-1
+// test bpl and bmi
+T5:          bpl    FAIL        // should not take the branch!
+             mv     r6, #C7     // save address of next test
+C7:          bmi    C8          // should take the branch
+             mv     pc, #FAIL   // Argh!
+C8:          add    r2, #2      // count the last two successful tests
+             mv     r6, #T6
+             mv     r3, #0
+             add    r3, r3      // clear negative flag
+// test bpl and bmi
+T6:          bpl    S3          // should take the branch!
+             mv     pc, #FAIL
 \end{lstlisting}
 \end{minipage}
 \caption{Assembly-language program that tests various instructions. (Part $a$)}
@@ -568,61 +784,54 @@ C2:		add	r2, #2		// count the last two successful tests
 \begin{center}
 \begin{minipage}[t]{14 cm}
 \begin{lstlisting}[name=proc]
-			mv		r6, #T2			// save address of next test
-T2:		bne	#S1    			// test bne; should take the branch!
-			mv		pc, #FAIL
-S1:		mv 	r6, #C3			// save address of next test
-C3:      beq   #FAIL          // test beq; should not take the branch
-			add	r2, #2			// count the last two successful tests
-
-			mv		r6, #T3			// save address of next test
-			mv		r3, #ALLONES
-			ld		r3, [r3]
-			add	r3, #1			// set the c flag
-
-T3:		bcc	#FAIL    		// test bcc; should not take the branch!
-			mv 	r6, #C4			// save address of next test
-C4:      bcs   #C5            // test bcs; should take the branch
-    		b	   #FAIL    		// Argh!
-C5:		add	r2, #2			// count the last two successful tests
-
-			mv		r6, #T4
-			mv		r3, #0
-			add	r3, r3			// clear carry flag
-
-T4:		bcc	#S2   			// test bcc; should take the branch!
-			mv		pc, #FAIL
-S2:		mv 	r6, #C6			// save address of next test
-C6:      bcs   #FAIL          // test bcs; should bot take the branch!
-         add	r2, #2			// count the last two successes
-
+S3:          mv     r6, #C9     // save address of next test
+C9:          bmi    FAIL        // should not take the branch!
+             add    r2, #2      // count the last two successes
 // finally, test ld and st from/to memory
-			mv		r6, #T5			// save address of next test
-			mv		r4, #_LDTEST
-			ld		r4, [r4]
-			mv		r3, #0x1A5
-			sub	r3, r4
-T5:		bne	#FAIL	      	// should not take the branch!
-			add	r2, #1			// increment success count
+             mv     r6, #T7          // save address of next test
+             mv     r4, #_LDTEST
+             ld     r4, [r4]
+             mv     r3, #0x0A5
+             sub    r3, r4
+T7:          bne    FAIL             // should not take the branch!
+             add    r2, #1           // incr success count
 
-			mv		r6, #T6			// save address of next test
-			mv		r3, #0x1A5
-			mv		r4, #_STTEST
-			st		r3, [r4]		
-			ld		r4, [r4]
-			sub	r3, r4
-T6:		bne	#FAIL    		// should not take the branch!
-			add	r2, #1			// increment success count
+             mv     r6, #T8          // save address of next test
+             mv     r3, #0x0A5
+             mv     r4, #_STTEST
+             st     r3, [r4]        
+             ld     r4, [r4]
+             sub    r3, r4
+T8:          bne    FAIL             // should not take the branch!
+             add    r2, #1           // incr success count
 
-			mv		pc, #PASS
-			// Loop over the six HEX displays
-FAIL:		mvt	r3, #LED_ADDRESS
-			st		r6, [r3]			// show address of failed test on LEDs
-			mv		r5, #_FAIL
-			mv		pc, #PRINT
-PASS:		mvt	r3, #LED_ADDRESS
-			st		r2, [r3]			// show success count on LEDs
-			mv		r5, #_PASS
+             mv     pc, #PASS
+
+// Loop over the six HEX displays
+FAIL:        mvt    r3, #LED_ADDRESS
+             st     r6, [r3]         // show failed test address on LEDs
+             mv     r5, #_FAIL
+             mv     pc, #PRINT
+PASS:        mvt    r3, #LED_ADDRESS
+             st     r2, [r3]         // show success count on LEDs
+             mv     r5, #_PASS
+
+PRINT:       mvt    r4, #HEX_ADDRESS // address of HEX0 
+             // We would normally use a loop counting down from 6 with 
+             // conditional branching, but in this testing code we can't
+             // assume that branching even works!
+             ld     r3, [r5]         // get letter 
+             st     r3, [r4]         // send to HEX display
+             add    r5, #1           // ++increment character pointer 
+             add    r4, #1           // point to next HEX display
+             ld     r3, [r5]         // get letter 
+             st     r3, [r4]         // send to HEX display
+             add    r5, #1           // ++increment character pointer 
+             add    r4, #1           // point to next HEX display
+             ld     r3, [r5]         // get letter 
+             st     r3, [r4]         // send to HEX display
+             add    r5, #1           // ++increment character pointer 
+             add    r4, #1           // point to next HEX display
 \end{lstlisting}
 \end{minipage}
 \end{center}
@@ -632,57 +841,39 @@ Figure \ref{fig:sitbooboosit}: Assembly-language program that tests various inst
 \end{center}
 
 \begin{center}
-\begin{minipage}[t]{12.5 cm}
+\begin{minipage}[t]{14 cm}
 \begin{lstlisting}[name=proc]
-PRINT:	mvt	r4, #HEX_ADDRESS		// address of HEX0 
-			// We would normally use a loop counting down from 6
-			// with bne to display the six letters. But in this
-			// testing code we can't assume that bne even works!
+         ld     r3, [r5]         // get letter 
+         st     r3, [r4]         // send to HEX display
+         add    r5, #1           // ++increment character pointer 
+         add    r4, #1           // point to next HEX display
+         ld     r3, [r5]         // get letter 
+         st     r3, [r4]         // send to HEX display
+         add    r5, #1           // ++increment character pointer 
+         add    r4, #1           // point to next HEX display
+         ld     r3, [r5]         // get letter 
+         st     r3, [r4]         // send to HEX display
+         add    r5, #1           // ++increment character pointer 
+         add    r4, #1           // point to next HEX display
+            
+HERE:    mv     pc, #HERE
 
-			ld		r3, [r5]			// get letter 
- 			st		r3, [r4]			// send to HEX display
- 			add	r5, #1			// ++increment character pointer 
- 			add	r4, #1			// point to next HEX display
-			ld		r3, [r5]			// get letter 
- 			st		r3, [r4]			// send to HEX display
- 			add	r5, #1			// ++increment character pointer 
- 			add	r4, #1			// point to next HEX display
-			ld		r3, [r5]			// get letter 
- 			st		r3, [r4]			// send to HEX display
- 			add	r5, #1			// ++increment character pointer 
- 			add	r4, #1			// point to next HEX display
-			ld		r3, [r5]			// get letter 
- 			st		r3, [r4]			// send to HEX display
- 			add	r5, #1			// ++increment character pointer 
- 			add	r4, #1			// point to next HEX display
-			ld		r3, [r5]			// get letter 
- 			st		r3, [r4]			// send to HEX display
- 			add	r5, #1			// ++increment character pointer 
- 			add	r4, #1			// point to next HEX display
-			ld		r3, [r5]			// get letter 
- 			st		r3, [r4]			// send to HEX display
- 			add	r5, #1			// ++increment character pointer 
- 			add	r4, #1			// point to next HEX display
-			
-HERE:		mv		pc, #HERE
+_PASS:   .word  0b0000000001011110    // d
+         .word  0b0000000001111001    // E
+         .word  0b0000000001101101    // S
+         .word  0b0000000001101101    // S
+         .word  0b0000000001110111    // A
+         .word  0b0000000001110011    // P
 
-_PASS:	.word	0b0000000001011110	// d
-			.word	0b0000000001111001	// E
-			.word	0b0000000001101101	// S
-			.word	0b0000000001101101	// S
-			.word	0b0000000001110111	// A
-			.word 0b0000000001110011	// P
+_FAIL:   .word  0b0000000001011110    // d
+         .word  0b0000000001111001    // E
+         .word  0b0000000000111000    // L
+         .word  0b0000000000110000    // I
+         .word  0b0000000001110111    // A
+         .word  0b0000000001110001    // F
 
-_FAIL:	.word	0b0000000001011110	// d
-			.word	0b0000000001111001	// E
-			.word	0b0000000000111000	// L
-			.word	0b0000000000110000	// I
-			.word	0b0000000001110111	// A
-			.word 0b0000000001110001	// F
-
-ALLONES:	.word 0xFFFF
-_LDTEST:	.word 0x1A5
-_STTEST:	.word 0x15A
+_LDTEST: .word  0x0A5
+_STTEST: .word  0x05A
 \end{lstlisting}
 \end{minipage}
 \end{center}
@@ -691,28 +882,38 @@ _STTEST:	.word 0x15A
 Figure \ref{fig:sitbooboosit}: Assembly-language program that tests various instructions. (Part $c$)
 \end{center}
 
+\item
+When compiling your design using the Quartus Prime software, it is possible to make use of
+an updated {\it inst\_mem.mif} file without completely recompiling your Verilog code for the 
+processor system. You can execute the Quartus command 
+\texttt{Processing} $>$ \texttt{Update Memory Initialization File} to include a 
+new {\it inst\_mem.mif} file in your Quartus project. Then, select the Quartus 
+command \texttt{Processing} $>$ \texttt{Start} $>$ \texttt{Start Assembler} to produce a new 
+programming {\it bitstream} for your FPGA board. Finally, use 
+the Quartus Programmer to 
+download the new bitstream onto your board. If the {\it Run} signal is asserted, your
+processor should execute the new program.
+
+\end{enumerate}
+
+\lstset{language=ASM,numbers=none,escapechar=|}
 \section*{Part VI}
 Write an assembly-language program that displays a binary counter on the LED port. Initialize 
-the counter to 0, and then increment the counter by one in an endless loop. You should be
-able to control the speed at which the counter is incremented by using nested delay loops, 
-along with the SW switches. If the SW switches are set to their maximum value, 
-\texttt{0b111111111}, then the delay loops should cause the counter to increment slowly enough 
-so that each change in the counter can be visually observed on the LEDs. Lowering the value 
-of the SW switches should make the counter increment more quickly up to some maximum speed. 
+the counter to~0, and then increment the counter by one in an endless loop. You should be
+able to control the speed at which the counter is incremented by using nested delay loops;
+the inner loop should have a fixed delay, and the outer loop should be controlled by the 
+SW switch settings.  Changing the settings of the SW switches should cause the counter 
+to increment more slowly/quickly on the LEDs. 
 
 ~\\
 \noindent
-You can assemble your program by using the {\it sbasm.py} assembler, and then run it on
-your processor system from Part V. To do this, use the output produced by {\it sbasm.py} to 
-{\it overwrite} the file {\it inst\_mem.mif} in the folder that holds your Quartus project for
-Part V. To make use of the new {\it inst\_mem.mif} file you do not need to completely 
-recompile your Verilog code from Part V. Instead, execute the Quartus command 
-\texttt{Processing} $>$ \texttt{Update Memory Initialization File}, to include the 
-new {\it inst\_mem.mif} file in your Quartus project. Next, select the Quartus 
-command \texttt{Processing} $>$ \texttt{Start} $>$ \texttt{Start Assembler} to produce a new 
-programming {\it bitstream} for your DE1-SoC board. Finally, use the Quartus Programmer to 
-download the new bitstream onto your board. If the {\it Run} signal is asserted, your
-processor should execute the new program.
+Assemble your program by using the {\it sbasm.py} assembler, and then run it on
+your processor. If you are using the DESim tool, then (re)-compiling your Verilog code will
+initialize the processor's memory with the current contents of the {\it inst\_mem.mif}, 
+as mentioned before. 
+If you are using Quartus Prime to run your processor on an FPGA board, then follow the 
+procedure described in Step 3., above, to incorporate an updated {\it MIF} file that can
+be downloaded with your processor system onto the board.
 
 \section*{Part VII}
 Augment your assembly-language program from Part VI so that counter values are displayed
@@ -720,13 +921,18 @@ on the seven-segment display port rather than on the LED port. You should displa
 counter values as decimal numbers from \texttt{\red{0}} to \texttt{\red{65535}}.
 The speed of counting should be controllable using the SW switches in the same way as for
 Part VI. As part of your solution you may want to make use of the code shown in 
-Figure~\ref{fig:div10}. This code provides a subroutine that divides the number in
-register $r0$ by 10, returning the quotient in $r1$ and the remainder in $r0$. Dividing by 10 is a 
-useful operation when performing binary-to-decimal conversion. The \texttt{DIV10} subroutine
-assumes that $r6$ is set up to be used as a {\it stack pointer}. Register $r2$ is saved on the
-stack at the beginning of the subroutine, and then restored before returning. This is done so
-that $r2$ is not unnecessarily changed by the subroutine. A skeleton of the required code
-for this part is shown in Figure~\ref{fig:part7}.
+Figure~\ref{fig:div10}. This code provides a subroutine, {\it DIV10}, that divides the number in
+register $r0$ by 10, returning the quotient in $r1$ and the remainder in $r0$. 
+Dividing by 10 is a useful operation when performing binary-to-decimal conversion. 
+A skeleton of the required code for this part is shown in Figure~\ref{fig:part7}.
+Since the enhanced processor does not provide a method for calling and returning from a
+subroutine, the code in Figures~\ref{fig:div10} and~\ref{fig:part7} uses an ad hoc method,
+in which register $r6$ is used to compute a return address for the {\it DIV10} subroutine.
+
+~\\
+\noindent
+As described previously, assemble your code by using the {\it sbasm.py} assembler tool, 
+and then execute the new program on your processor system.
 
 \lstset{language=ASM,numbers=none,escapechar=|}
 \begin{figure}[H]
@@ -734,28 +940,23 @@ for this part is shown in Figure~\ref{fig:part7}.
 \begin{minipage}[h]{15 cm}
 \begin{lstlisting}[name=proc]
 // subroutine DIV10
-//	  This subroutine divides the number in r0 by 10
-//	  The algorithm subtracts 10 from r0 until r0 < 10, and keeps count in r1
-//	  This subroutine assumes that r6 can be used as a stack pointer
-//	  input: r0
-//	  returns: quotient Q in r1, remainder R in r0
+//      This subroutine divides the number in r0 by 10
+//      The algorithm subtracts 10 from r0 until r0 < 10, and keeps count in r1
+//      This subroutine also changes r2
+//      input: r0
+//      returns: quotient Q in r1, remainder R in r0
 DIV10:
-			sub	r6, #1				// save registers that are modified
-			st		r2, [r6]				// save on the stack
+            mv     r1, #0                // init Q
+DLOOP:      mv     r2, #9                // check if r0 is < 10  yet
+            sub    r2, r0
+            bcs    RETDIV                // if so, then return
 
-			mv 	r1, #0				// init Q
-DLOOP:	mv 	r2, #9				// check if r0 is < 10  yet
-			sub	r2, r0
-			bcc	#RETDIV				// if so, then return
-
-INC:		add	r1, #1				// but if not, then increment Q
-			sub	r0, #10				// r0 -= 10
-			b 		#DLOOP				// continue loop
+INC:        add    r1, #1                // but if not, then increment Q
+            sub    r0, #10               // r0 -= 10
+            b      DLOOP                 // continue loop
 RETDIV:
-			ld		r2, [r6]				// restore from the stack
-			add	r6, #1
-			add	r5, #1				// adjust the return address
-			mv		pc, r5				// return results
+            add    r6, #1                // adjust the return address
+            mv     pc, r6                // return results
 \end{lstlisting}
 \end{minipage}
 \caption{A subroutine that divides by 10}
@@ -763,58 +964,48 @@ RETDIV:
 \end{center}
 \end{figure}
 
-\noindent
-As described previously, assemble your program with {\it sbasm.py}, update your {\it MIF} file 
-in the Quartus software, generate a new bitstream file by using the Quartus Assembler, and 
-then download the new bitstream onto your DE1-SoC board to run your new program. 
-
 \lstset{language=ASM,numbers=none,escapechar=|}
 \begin{figure}[H]
 \begin{center}
 \begin{minipage}[h]{15 cm}
 \begin{lstlisting}[name=proc]
-.define HEX_ADDRESS 0x2000
-.define SW_ADDRESS 0x3000
-.define STACK 256						// bottom of memory
+.define HEX_ADDRESS 0x20
+.define SW_ADDRESS 0x30
 
 // This program shows a decimal counter on the HEX displays
-			mv 	r6, #STACK			// stack pointer
-			mv		r5, pc				// return address for subroutine
-			mv 	pc, #BLANK			// call subroutine to blank the HEX displays
-MAIN:		mv 	r0, #0				// initialize counter
-LOOP:		mvt	r1, #HEX_ADDRESS	// point to HEX port
-			...
-         ... use a loop to extract and display each digit
+MAIN:    mv     r6, pc           // return address for subroutine
+         mv     pc, #BLANK       // call subroutine to blank the HEX displays
+         mv     r0, #0           // initialize counter
+LOOP:    mvt    r3, #HEX_ADDRESS // point to HEX port
+         ...
+         ... use a loop to extract |and| display each digit
          ...
 
 // Delay loop for controlling the rate at which the HEX displays are updated
          ...
-         ... read from SW switches, and use a nested delay loop
+         ... read from SW switches, |and| use a nested delay loop
          ...
+         add    r0, #1           // counter += 1
+         bcc    LOO              // continue until counter overflows
 
-			add	r0, #1				// counter += 1
-			bcc	#LOOP					// continue until counter overflows
+         b      MAIN
 
-			mv		r5, pc				// return address for subroutine
-			mv 	pc, #BLANK			// call subroutine to blank the HEX displays
-			b 	   #MAIN
-
-// subroutine DIV
+// subroutine DIV10
          ...
          ... code not shown here
          ...
-			add	r5, #1				// adjust the return address
-			mv		pc, r5				// return results
+         add    r6, #1           // adjust the return address
+         mv     pc, r6           // return results
 
 // subroutine BLANK
          ...
          ... code not shown here
          ...
-			add	r5, #1
-			mv		pc, r5				// return from subroutine
+         add    r6, #1
+         mv     pc, r6           // return from subroutine
 
-DATA:		.word 0b00111111			// '0'
-			....
+DATA:    .word  0b00111111       // '0'
+         ....
 \end{lstlisting}
 \end{minipage}
 \caption{Skeleton code for displaying decimal digits.}
